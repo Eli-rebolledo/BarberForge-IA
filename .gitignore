@@ -1,0 +1,26 @@
+# Secretos
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.db
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# OpenTofu (estado y variables con secretos)
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+
+# Sistema
+.DS_Store
