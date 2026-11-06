@@ -1,0 +1,6 @@
+# Estado y secretos de OpenTofu: nunca a Git
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+crash.log
