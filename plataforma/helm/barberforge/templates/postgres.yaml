@@ -1,0 +1,95 @@
+# PostgreSQL 16 + pgvector. StatefulSet con volumen persistente: los datos sobreviven a reinicios del pod.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "bf.nombre" . }}-postgres
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+    app.kubernetes.io/component: postgres
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "bf.selector" (dict "ctx" . "componente" "postgres") | nindent 4 }}
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "bf.nombre" . }}-postgres
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+    app.kubernetes.io/component: postgres
+spec:
+  serviceName: {{ include "bf.nombre" . }}-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "bf.selector" (dict "ctx" . "componente" "postgres") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "bf.etiquetas" . | nindent 8 }}
+        app.kubernetes.io/component: postgres
+    spec:
+      serviceAccountName: {{ include "bf.nombre" . }}
+      automountServiceAccountToken: false
+      securityContext:
+        {{- include "bf.seguridadPod" . | nindent 8 }}
+        runAsUser: 999      # usuario «postgres» de la imagen
+        runAsGroup: 999
+        fsGroup: 999
+      containers:
+        - name: postgres
+          image: {{ .Values.postgres.imagen }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.usuario | quote }}
+            - name: POSTGRES_DB
+              value: {{ .Values.postgres.baseDeDatos | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: {{ .Values.secretos.nombre }}, key: DB_PASSWORD}}
+            - name: PGDATA       # subcarpeta: la raíz del volumen trae «lost+found»
+              value: /var/lib/postgresql/data/pgdata
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", {{ .Values.postgres.usuario | quote }}]
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", {{ .Values.postgres.usuario | quote }}]
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.postgres.recursos | nindent 12 }}
+          securityContext:
+            {{- include "bf.seguridadContenedor" . | nindent 12 }}
+          volumeMounts:
+            - name: datos
+              mountPath: /var/lib/postgresql/data
+            - name: tmp
+              mountPath: /tmp
+            - name: socket
+              mountPath: /var/run/postgresql
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: socket
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: datos
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- with .Values.postgres.storageClass }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.postgres.almacenamiento }}

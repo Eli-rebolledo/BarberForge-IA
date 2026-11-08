@@ -1,0 +1,9 @@
+apiVersion: v2
+name: barberforge
+description: BarberForge AI - agenda de barbería con asistente de IA local (API FastAPI, web Next.js, PostgreSQL + pgvector)
+type: application
+version: 1.0.0
+appVersion: "1.1.0"
+keywords: [barberia, fastapi, nextjs, postgres, ollama, rag]
+maintainers:
+  - name: Equipo BarberForge (Unicomfacauca - CloudForge AI 5.0)
