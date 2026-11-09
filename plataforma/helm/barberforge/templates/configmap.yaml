@@ -1,0 +1,29 @@
+# Configuración no secreta de la API (las claves vienen del Secret que crea OpenTofu).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "bf.nombre" . }}-config
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+data:
+  ENTORNO: {{ .Values.entorno | quote }}
+  DB_HOST: {{ include "bf.nombre" . }}-postgres
+  DB_PORT: "5432"
+  DB_USER: {{ .Values.postgres.usuario | quote }}
+  DB_NAME: {{ .Values.postgres.baseDeDatos | quote }}
+  OLLAMA_URL: {{ if eq .Values.ollama.modo "interno" }}{{ printf "http://%s-ollama:11434" (include "bf.nombre" .) | quote }}{{ else }}{{ .Values.ollama.urlExterna | quote }}{{ end }}
+  LLM_MODEL: {{ .Values.ollama.modelo | quote }}
+  EMBED_MODEL: {{ .Values.ollama.modeloEmbeddings | quote }}
+  {{- if .Values.mailhog.enabled }}
+  SMTP_HOST: {{ include "bf.nombre" . }}-mailhog
+  SMTP_PORT: "1025"
+  {{- end }}
+  PUBLIC_URL: {{ .Values.barberia.publicUrl | quote }}
+  BARBERIA_NOMBRE: {{ .Values.barberia.nombre | quote }}
+  BARBERIA_DIRECCION: {{ .Values.barberia.direccion | quote }}
+  ZONA_HORARIA: {{ .Values.barberia.zonaHoraria | quote }}
+  SEED_DEMO: {{ .Values.barberia.seedDemo | quote }}
+  {{- if .Values.observabilidad.enabled }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.observabilidad.endpoint | quote }}
+  OTEL_SEMCONV_STABILITY_OPT_IN: "http"
+  {{- end }}

@@ -1,0 +1,52 @@
+{{- if .Values.migraciones.enabled }}
+# Aplica las migraciones (alembic upgrade head) y los datos iniciales ANTES de actualizar la API.
+# Con Argo CD: hook «Sync» en la ola 1 → corre después de que PostgreSQL (ola 0) esté listo y antes de la
+# API y la web (ola 2). Con «helm install» directo corre después de instalar (la API igual reintenta).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "bf.nombre" . }}-migraciones
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+    app.kubernetes.io/component: migraciones
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "1"
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  backoffLimit: 4
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        {{- include "bf.etiquetas" . | nindent 8 }}
+        app.kubernetes.io/component: migraciones
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ include "bf.nombre" . }}
+      automountServiceAccountToken: false
+      {{- include "bf.pullSecrets" . | nindent 6 }}
+      securityContext:
+        {{- include "bf.seguridadPod" . | nindent 8 }}
+        runAsUser: 10001
+        runAsGroup: 10001
+      containers:
+        - name: migraciones
+          image: {{ include "bf.imagenApi" . }}
+          imagePullPolicy: {{ .Values.imagenes.pullPolicy }}
+          command: ["python", "-m", "app.tareas", "migrar"]
+          {{- include "bf.entornoApi" . | nindent 10 }}
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+            limits: {cpu: 500m, memory: 384Mi}
+          securityContext:
+            {{- include "bf.seguridadContenedor" . | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{- end }}
