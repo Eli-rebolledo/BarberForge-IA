@@ -1,0 +1,36 @@
+# Entorno staging (namespace barberforge-staging). Se promueve a mano: copiar aquí los tags que ya
+# funcionaron en dev, por pull request. Argo CD NO lo sincroniza solo: hay que darle «Sync».
+entorno: staging
+
+imagenes:
+  api:
+    tag: latest
+  web:
+    tag: latest
+
+barberia:
+  publicUrl: http://staging.barberforge.local
+  seedDemo: false
+
+api:
+  replicas: 2
+  recursos:
+    requests: {cpu: 200m, memory: 384Mi}
+    limits: {cpu: "1", memory: 768Mi}
+  autoescalado:
+    enabled: true
+    min: 2
+    max: 4
+    cpuPromedio: 70
+
+web:
+  replicas: 2
+
+postgres:
+  almacenamiento: 5Gi
+
+ingress:
+  host: staging.barberforge.local
+
+observabilidad:
+  enabled: true

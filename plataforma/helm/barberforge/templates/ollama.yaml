@@ -1,0 +1,73 @@
+{{- if eq .Values.ollama.modo "interno" }}
+# IA local dentro del clúster (opcional). Necesita ~8 GB de RAM para llama3: en equipos de 16 GB es mejor
+# dejar Ollama en Docker Desktop (ollama.modo: externo).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "bf.nombre" . }}-ollama
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ .Values.ollama.interno.almacenamiento }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "bf.nombre" . }}-ollama
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+    app.kubernetes.io/component: ollama
+spec:
+  selector:
+    {{- include "bf.selector" (dict "ctx" . "componente" "ollama") | nindent 4 }}
+  ports:
+    - {name: http, port: 11434, targetPort: 11434}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bf.nombre" . }}-ollama
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+    app.kubernetes.io/component: ollama
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels:
+      {{- include "bf.selector" (dict "ctx" . "componente" "ollama") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "bf.etiquetas" . | nindent 8 }}
+        app.kubernetes.io/component: ollama
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: ollama
+          image: {{ .Values.ollama.interno.imagen }}
+          ports:
+            - {name: http, containerPort: 11434}
+          # Descarga los modelos al arrancar (la primera vez tarda varios minutos).
+          lifecycle:
+            postStart:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 5; ollama pull {{ .Values.ollama.modeloEmbeddings }} && ollama pull {{ .Values.ollama.modelo }}"]
+          readinessProbe:
+            httpGet: {path: /, port: http}
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.ollama.interno.recursos | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: modelos
+              mountPath: /root/.ollama
+      volumes:
+        - name: modelos
+          persistentVolumeClaim:
+            claimName: {{ include "bf.nombre" . }}-ollama
+{{- end }}

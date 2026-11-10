@@ -1,0 +1,23 @@
+{{- if .Values.api.autoescalado.enabled }}
+# Autoescalado de la API por CPU (requiere metrics-server: minikube addons enable metrics-server).
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "bf.nombre" . }}-api
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "bf.nombre" . }}-api
+  minReplicas: {{ .Values.api.autoescalado.min }}
+  maxReplicas: {{ .Values.api.autoescalado.max }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.api.autoescalado.cpuPromedio }}
+{{- end }}

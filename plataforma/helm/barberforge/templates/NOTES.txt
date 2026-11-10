@@ -1,0 +1,18 @@
+BarberForge desplegado en el namespace {{ .Release.Namespace }} (entorno {{ .Values.entorno }}).
+
+Abrir la aplicación sin Ingress:
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "bf.nombre" . }}-web 8080:8080
+  → http://localhost:8080
+{{- if .Values.ingress.enabled }}
+
+Con Ingress (minikube addons enable ingress + minikube tunnel), agrega al archivo hosts:
+  127.0.0.1  {{ .Values.ingress.host }}
+  → http://{{ .Values.ingress.host }}
+{{- end }}
+{{- if .Values.mailhog.enabled }}
+
+Correos de prueba:
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "bf.nombre" . }}-mailhog 8025:8025
+{{- end }}
+
+Estado:  kubectl get pods -n {{ .Release.Namespace }}
