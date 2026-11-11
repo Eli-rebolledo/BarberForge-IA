@@ -1,0 +1,23 @@
+# AppProject: limita qué repositorio y qué namespaces puede tocar Argo CD para BarberForge (menor privilegio).
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: barberforge
+  namespace: {{ .Release.Namespace }}
+spec:
+  description: BarberForge AI - agenda de barbería con IA local
+  sourceRepos:
+    - {{ .Values.repoURL }}
+  destinations:
+    {{- range $nombre, $_ := .Values.entornos }}
+    - server: https://kubernetes.default.svc
+      namespace: barberforge-{{ $nombre }}
+    {{- end }}
+    {{- if .Values.observabilidad }}
+    - server: https://kubernetes.default.svc
+      namespace: observabilidad
+    {{- end }}
+  # Los namespaces los crea OpenTofu: Argo CD no necesita crear recursos de clúster.
+  clusterResourceWhitelist: []
+  orphanedResources:
+    warn: true
