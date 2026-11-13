@@ -1,0 +1,13 @@
+# Repositorio Git que Argo CD vigila (fuente de verdad del despliegue).
+repoURL: https://github.com/Eli-rebolledo/BarberForge-IA.git
+rama: main
+
+# Entornos a desplegar. dev se sincroniza solo (y corrige cambios manuales: «self-heal»);
+# staging se sincroniza a mano desde la interfaz de Argo CD o con «argocd app sync barberforge-staging».
+entornos:
+  dev:
+    automatico: true
+  staging:
+    automatico: false
+
+observabilidad: true

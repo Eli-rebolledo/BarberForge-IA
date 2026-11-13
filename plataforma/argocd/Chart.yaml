@@ -1,0 +1,5 @@
+apiVersion: v2
+name: barberforge-gitops
+description: Proyecto y aplicaciones de Argo CD para BarberForge (patrón «app of apps»). Lo instala OpenTofu.
+type: application
+version: 1.0.0
