@@ -1,0 +1,6 @@
+apiVersion: v2
+name: observabilidad
+description: Grafana + Prometheus + Tempo + Loki + recolector OpenTelemetry (grafana/otel-lgtm) para BarberForge, como en el Laboratorio 3
+type: application
+version: 1.0.0
+appVersion: "0.8.1"
