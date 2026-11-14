@@ -1,0 +1,100 @@
+# Recolector OpenTelemetry (OTLP 4317/4318) + Prometheus (métricas) + Tempo (trazas) + Loki (logs) + Grafana (3000).
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-lgtm
+  labels: {app.kubernetes.io/name: otel-lgtm, app.kubernetes.io/part-of: barberforge}
+spec:
+  selector: {app.kubernetes.io/name: otel-lgtm}
+  ports:
+    - {name: grafana, port: 3000, targetPort: 3000}
+    - {name: otlp-grpc, port: 4317, targetPort: 4317}
+    - {name: otlp-http, port: 4318, targetPort: 4318}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: barberforge-dashboards
+  labels: {app.kubernetes.io/name: otel-lgtm}
+data:
+  proveedor.yaml: |
+    apiVersion: 1
+    providers:
+      - name: barberforge
+        folder: BarberForge
+        type: file
+        options:
+          path: /var/lib/barberforge-dashboards
+  barberforge-slo.json: |
+{{ .Files.Get "dashboards/barberforge-slo.json" | indent 4 }}
+---
+{{- if .Values.persistencia.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: otel-lgtm
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ .Values.persistencia.tamano }}
+---
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-lgtm
+  labels: {app.kubernetes.io/name: otel-lgtm, app.kubernetes.io/part-of: barberforge}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app.kubernetes.io/name: otel-lgtm}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: otel-lgtm, app.kubernetes.io/part-of: barberforge}
+      annotations:
+        checksum/dashboards: {{ .Files.Get "dashboards/barberforge-slo.json" | sha256sum }}
+    spec:
+      automountServiceAccountToken: false
+      # La imagen de laboratorio corre como root (hallazgo aceptado en docs/devsecops.md), pero sin
+      # capacidades extra ni escalada de privilegios y con el perfil seccomp por defecto.
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: otel-lgtm
+          image: {{ .Values.imagen }}
+          ports:
+            - {name: grafana, containerPort: 3000}
+            - {name: otlp-grpc, containerPort: 4317}
+            - {name: otlp-http, containerPort: 4318}
+          readinessProbe:
+            httpGet: {path: /api/health, port: grafana}
+            periodSeconds: 10
+            failureThreshold: 30
+          resources:
+            {{- toYaml .Values.recursos | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: datos
+              mountPath: /data
+            # Tablero de SLI/SLO de BarberForge, cargado automáticamente en Grafana (carpeta «BarberForge»).
+            - name: dashboards
+              mountPath: /otel-lgtm/grafana/conf/provisioning/dashboards/barberforge.yaml
+              subPath: proveedor.yaml
+            - name: dashboards
+              mountPath: /var/lib/barberforge-dashboards/barberforge-slo.json
+              subPath: barberforge-slo.json
+      volumes:
+        - name: datos
+          {{- if .Values.persistencia.enabled }}
+          persistentVolumeClaim: {claimName: otel-lgtm}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: dashboards
+          configMap: {name: barberforge-dashboards}

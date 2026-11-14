@@ -1,0 +1,8 @@
+imagen: grafana/otel-lgtm:0.8.1
+# Solo para laboratorio: en producción se usaría almacenamiento persistente y usuarios de Grafana reales.
+persistencia:
+  enabled: false
+  tamano: 5Gi
+recursos:
+  requests: {cpu: 250m, memory: 768Mi}
+  limits: {cpu: "1", memory: 1536Mi}
