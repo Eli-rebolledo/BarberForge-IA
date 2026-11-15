@@ -1,0 +1,75 @@
+# Responsables de revisión por feature (ver CONTRIBUTING.md). La última coincidencia gana.
+*                                                   @Eli-rebolledo @victor1134
+
+# 001 · Autenticación y cuentas — 002 · Barbería y catálogo — 008 · Plataforma, Compose y CI
+/codigo/backend/app/routers/auth.py                 @Eli-rebolledo
+/codigo/backend/app/routers/cuenta.py               @Eli-rebolledo
+/codigo/backend/app/services/usuarios.py            @Eli-rebolledo
+/codigo/frontend/app/login/                         @Eli-rebolledo
+/codigo/frontend/app/registro/                      @Eli-rebolledo
+/codigo/frontend/app/cuenta/                        @Eli-rebolledo
+/codigo/backend/app/routers/barberias.py            @Eli-rebolledo
+/codigo/backend/app/routers/servicios.py            @Eli-rebolledo
+/codigo/backend/app/services/barberia.py            @Eli-rebolledo
+/codigo/backend/app/services/servicios.py           @Eli-rebolledo
+/codigo/frontend/app/barberia/                      @Eli-rebolledo
+/codigo/frontend/app/admin/servicios/               @Eli-rebolledo
+/codigo/frontend/app/ajustes/                       @Eli-rebolledo
+/docker-compose*.yml                                @Eli-rebolledo
+/codigo/backend/Dockerfile                          @Eli-rebolledo
+/codigo/frontend/Dockerfile                         @Eli-rebolledo
+/codigo/backend/alembic/                            @Eli-rebolledo
+/spec/features/001-autenticacion-y-cuentas/         @Eli-rebolledo
+/spec/features/002-barberia-y-servicios/            @Eli-rebolledo
+/spec/features/008-plataforma-y-despliegue/         @Eli-rebolledo
+
+# 003 · Gestión de barberos — 004 · Disponibilidad
+/codigo/backend/app/routers/barberos.py             @JavierGalindez
+/codigo/backend/app/services/barberos.py            @JavierGalindez
+/codigo/backend/app/services/imagenes.py            @JavierGalindez
+/codigo/frontend/app/admin/barberos/                @JavierGalindez
+/codigo/frontend/components/BarberoCard.tsx         @JavierGalindez
+/codigo/frontend/components/FotoEditor.tsx          @JavierGalindez
+/codigo/backend/app/routers/disponibilidad.py       @JavierGalindez
+/codigo/backend/app/services/disponibilidad.py      @JavierGalindez
+/codigo/frontend/app/admin/disponibilidad/          @JavierGalindez
+/spec/features/003-gestion-de-barberos/             @JavierGalindez
+/spec/features/004-disponibilidad/                  @JavierGalindez
+
+# 005 · Agendamiento de citas — 006 · Recordatorios y confirmación
+/codigo/backend/app/routers/citas.py                @MiyerACI
+/codigo/backend/app/services/citas.py               @MiyerACI
+/codigo/backend/app/services/correo.py              @MiyerACI
+/codigo/frontend/app/agendar/                       @MiyerACI
+/codigo/frontend/app/citas/                         @MiyerACI
+/codigo/frontend/components/Reserva.tsx             @MiyerACI
+/spec/features/005-agendamiento-de-citas/           @MiyerACI
+/spec/features/006-recordatorios-y-confirmacion/    @MiyerACI
+
+# 007 · Asistente con IA y RAG — 009 · Kubernetes, GitOps e IaC
+/codigo/backend/app/routers/chat.py                 @victor1134
+/codigo/backend/app/routers/asistente.py            @victor1134
+/codigo/backend/app/services/chat.py                @victor1134
+/codigo/backend/app/services/rag.py                 @victor1134
+/codigo/backend/app/services/ia.py                  @victor1134
+/codigo/backend/app/services/aprendizaje.py         @victor1134
+/codigo/frontend/app/asistente/                     @victor1134
+/codigo/frontend/app/admin/asistente/               @victor1134
+/codigo/frontend/components/ChatAsistente.tsx       @victor1134
+/codigo/frontend/components/ChatFlotante.tsx        @victor1134
+/plataforma/                                        @victor1134
+/scripts/                                           @victor1134
+/docs/plataforma-kubernetes.md                      @victor1134
+/docs/runbook.md                                    @victor1134
+/spec/features/007-asistente-ia-rag/                @victor1134
+/spec/features/009-kubernetes-gitops-iac/           @victor1134
+
+# 010 · DevSecOps y observabilidad
+/.github/workflows/                                 @JavierGalindez
+/.trivyignore                                       @JavierGalindez
+/codigo/backend/app/core/telemetria.py              @JavierGalindez
+/codigo/backend/app/core/metricas.py                @JavierGalindez
+/plataforma/helm/observabilidad/                    @JavierGalindez
+/docs/devsecops.md                                  @JavierGalindez
+/docs/observabilidad.md                             @JavierGalindez
+/spec/features/010-devsecops-y-observabilidad/      @JavierGalindez

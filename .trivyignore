@@ -1,0 +1,7 @@
+# Hallazgos aceptados de Trivy. Cada uno tiene justificación y fecha de revisión (ver docs/devsecops.md).
+
+# grafana/otel-lgtm (observabilidad del laboratorio) escribe en varias rutas de su propia imagen, así que no puede
+# tener el disco de solo lectura. Mitigación: sin capacidades, sin escalada de privilegios, seccomp por defecto,
+# namespace propio y sin datos de usuarios. Revisado: 2026-11-18.
+KSV-0014
+AVD-KSV-0014

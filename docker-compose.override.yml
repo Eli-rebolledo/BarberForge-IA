@@ -1,0 +1,16 @@
+# Solo para desarrollo local (docker compose up). Dokploy usa únicamente docker-compose.yml.
+services:
+  web:
+    ports:
+      - "8080:8080"
+  mailhog:
+    ports:
+      - "8025:8025"
+  # Publicado para que Minikube use este Ollama (http://host.minikube.internal:11434).
+  bf-ollama:
+    ports:
+      - "11434:11434"
+  otel-lgtm:
+    ports:
+      - "3000:3000"   # Grafana (admin / admin)
+      - "4318:4318"   # OTLP por HTTP

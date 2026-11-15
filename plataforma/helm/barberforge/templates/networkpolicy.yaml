@@ -1,0 +1,119 @@
+{{- if .Values.networkPolicies.enabled }}
+# Menor privilegio en la red: por defecto nadie entra a los pods de este release; luego se abren solo los
+# caminos necesarios. (Se aplican si el CNI las soporta: minikube start --cni=calico.)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "bf.nombre" . }}-denegar-todo
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  policyTypes: ["Ingress"]
+---
+# La base de datos solo acepta conexiones de la API, el worker y el Job de migraciones.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "bf.nombre" . }}-postgres
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "bf.selector" (dict "ctx" . "componente" "postgres") | nindent 6 }}
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - {key: app.kubernetes.io/component, operator: In, values: [api, worker, migraciones]}
+      ports:
+        - {protocol: TCP, port: 5432}
+---
+# La API recibe tráfico de la web (nginx) y del controlador de Ingress.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "bf.nombre" . }}-api
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "bf.selector" (dict "ctx" . "componente" "api") | nindent 6 }}
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "bf.selector" (dict "ctx" . "componente" "web") | nindent 14 }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - {protocol: TCP, port: 8000}
+---
+# La web es pública (Ingress o port-forward).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "bf.nombre" . }}-web
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "bf.selector" (dict "ctx" . "componente" "web") | nindent 6 }}
+  policyTypes: ["Ingress"]
+  ingress:
+    - ports:
+        - {protocol: TCP, port: 8080}
+{{- if .Values.mailhog.enabled }}
+---
+# MailHog: SMTP desde la API/worker; la interfaz web por port-forward.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "bf.nombre" . }}-mailhog
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "bf.selector" (dict "ctx" . "componente" "mailhog") | nindent 6 }}
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - {key: app.kubernetes.io/component, operator: In, values: [api, worker]}
+      ports:
+        - {protocol: TCP, port: 1025}
+    - ports:
+        - {protocol: TCP, port: 8025}
+{{- end }}
+{{- if eq .Values.ollama.modo "interno" }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "bf.nombre" . }}-ollama
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "bf.selector" (dict "ctx" . "componente" "ollama") | nindent 6 }}
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - {key: app.kubernetes.io/component, operator: In, values: [api, worker]}
+      ports:
+        - {protocol: TCP, port: 11434}
+{{- end }}
+{{- end }}

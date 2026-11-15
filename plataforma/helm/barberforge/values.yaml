@@ -1,0 +1,99 @@
+# Valores base de BarberForge. Cada entorno sobrescribe lo necesario en values-dev.yaml / values-staging.yaml.
+# Los secretos (claves de la base de datos, JWT, administrador, SMTP) NO van aquí: los crea OpenTofu en el
+# Secret «barberforge-secretos» de cada namespace (ver plataforma/opentofu).
+
+entorno: dev
+
+imagenes:
+  api:
+    repositorio: ghcr.io/eli-rebolledo/barberforge-api
+    tag: latest          # el pipeline lo cambia por el SHA del commit (GitOps)
+  web:
+    repositorio: ghcr.io/eli-rebolledo/barberforge-web
+    tag: latest
+  pullPolicy: IfNotPresent
+  # Si las imágenes de GHCR son privadas: [{name: ghcr-credenciales}] (OpenTofu crea ese Secret si le das un token)
+  pullSecrets: []
+
+secretos:
+  nombre: barberforge-secretos   # llaves: DB_PASSWORD, JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD, SMTP_*
+
+barberia:
+  nombre: BarberForge Popayán
+  direccion: Popayán, Cauca
+  zonaHoraria: America/Bogota
+  publicUrl: http://localhost:8080
+  seedDemo: true
+
+api:
+  replicas: 1
+  recursos:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {cpu: "1", memory: 512Mi}
+  autoescalado:
+    enabled: false
+    min: 2
+    max: 4
+    cpuPromedio: 70
+
+# Proceso aparte (1 réplica) para recordatorios por correo e indexado del asistente: así la API puede tener
+# varias réplicas sin enviar correos repetidos.
+worker:
+  enabled: true
+  recursos:
+    requests: {cpu: 50m, memory: 192Mi}
+    limits: {cpu: 500m, memory: 384Mi}
+
+# Job que aplica las migraciones (alembic upgrade head) antes de actualizar la API.
+migraciones:
+  enabled: true
+
+web:
+  replicas: 1
+  recursos:
+    requests: {cpu: 25m, memory: 32Mi}
+    limits: {cpu: 250m, memory: 128Mi}
+  dnsResolver: kube-dns.kube-system.svc.cluster.local
+
+postgres:
+  imagen: pgvector/pgvector:pg16
+  usuario: barber
+  baseDeDatos: barber
+  almacenamiento: 2Gi
+  storageClass: ""       # vacío = la clase por defecto del clúster (en Minikube: standard)
+  recursos:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {cpu: "1", memory: 1Gi}
+
+# IA local. «externo»: Ollama corre fuera del clúster (Docker Desktop) — recomendado en equipos de 16 GB.
+# «interno»: Ollama corre dentro del clúster (necesita ~8 GB de RAM libres en Minikube para llama3).
+ollama:
+  modo: externo
+  urlExterna: http://host.minikube.internal:11434
+  modelo: llama3
+  modeloEmbeddings: nomic-embed-text
+  interno:
+    imagen: ollama/ollama:0.5.4
+    almacenamiento: 10Gi
+    recursos:
+      requests: {cpu: "1", memory: 4Gi}
+      limits: {cpu: "4", memory: 8Gi}
+
+# Correo de pruebas (MailHog). En producción se usa un SMTP real definido en el Secret.
+mailhog:
+  enabled: true
+  imagen: mailhog/mailhog:v1.0.1
+
+ingress:
+  enabled: true
+  className: nginx
+  host: barberforge.local
+
+# OpenTelemetry: la API envía trazas, métricas y logs al recolector (chart plataforma/helm/observabilidad).
+observabilidad:
+  enabled: false
+  endpoint: http://otel-lgtm.observabilidad.svc.cluster.local:4318
+
+# Solo se cumplen si el clúster tiene un CNI con políticas de red (minikube start --cni=calico).
+networkPolicies:
+  enabled: true

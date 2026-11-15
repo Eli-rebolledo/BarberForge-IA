@@ -1,0 +1,63 @@
+{{- if .Values.worker.enabled }}
+# Misma imagen que la API, una sola réplica, sin Service: envía los recordatorios (40 min antes), cancela las
+# citas no confirmadas e indexa la base de conocimiento del asistente al arrancar.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bf.nombre" . }}-worker
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate   # nunca dos workers a la vez (correos duplicados)
+  selector:
+    matchLabels:
+      {{- include "bf.selector" (dict "ctx" . "componente" "worker") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "bf.etiquetas" . | nindent 8 }}
+        app.kubernetes.io/component: worker
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ include "bf.nombre" . }}
+      automountServiceAccountToken: false
+      {{- include "bf.pullSecrets" . | nindent 6 }}
+      securityContext:
+        {{- include "bf.seguridadPod" . | nindent 8 }}
+        runAsUser: 10001
+        runAsGroup: 10001
+      containers:
+        - name: worker
+          image: {{ include "bf.imagenApi" . }}
+          imagePullPolicy: {{ .Values.imagenes.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+          {{- include "bf.entornoApi" . | nindent 10 }}
+            - name: EJECUTAR_RECORDATORIOS
+              value: "true"
+            - name: INDEXAR_AL_ARRANCAR
+              value: "true"
+            - name: OTEL_SERVICE_NAME
+              value: barberforge-worker
+          livenessProbe:
+            httpGet: {path: /health, port: http}
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          resources:
+            {{- toYaml .Values.worker.recursos | nindent 12 }}
+          securityContext:
+            {{- include "bf.seguridadContenedor" . | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{- end }}

@@ -1,0 +1,87 @@
+# API FastAPI. Varias réplicas posibles: los recordatorios los hace el «worker».
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "bf.nombre" . }}-api
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "bf.selector" (dict "ctx" . "componente" "api") | nindent 4 }}
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bf.nombre" . }}-api
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+    app.kubernetes.io/component: api
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  {{- if not .Values.api.autoescalado.enabled }}
+  replicas: {{ .Values.api.replicas }}
+  {{- end }}
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxUnavailable: 0, maxSurge: 1}   # nunca se queda sin API durante una actualización
+  selector:
+    matchLabels:
+      {{- include "bf.selector" (dict "ctx" . "componente" "api") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "bf.etiquetas" . | nindent 8 }}
+        app.kubernetes.io/component: api
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ include "bf.nombre" . }}
+      automountServiceAccountToken: false
+      {{- include "bf.pullSecrets" . | nindent 6 }}
+      securityContext:
+        {{- include "bf.seguridadPod" . | nindent 8 }}
+        runAsUser: 10001
+        runAsGroup: 10001
+      containers:
+        - name: api
+          image: {{ include "bf.imagenApi" . }}
+          imagePullPolicy: {{ .Values.imagenes.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+          {{- include "bf.entornoApi" . | nindent 10 }}
+            - name: EJECUTAR_RECORDATORIOS
+              value: {{ (not .Values.worker.enabled) | quote }}
+            - name: INDEXAR_AL_ARRANCAR
+              value: {{ (not .Values.worker.enabled) | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: barberforge-api
+          startupProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 5
+            failureThreshold: 24
+          livenessProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 20
+          readinessProbe:
+            httpGet: {path: /health/db, port: http}
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.api.recursos | nindent 12 }}
+          securityContext:
+            {{- include "bf.seguridadContenedor" . | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

@@ -1,0 +1,18 @@
+# 1) Compila el sitio estático con Next.js
+FROM node:22-alpine AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# 2) Lo sirve nginx SIN privilegios (usuario 101, puerto 8080) y reenvía /api al backend.
+#    La dirección del backend llega por variable de entorno, así la misma imagen sirve en Compose y Kubernetes.
+FROM nginxinc/nginx-unprivileged:1.27-alpine
+ENV API_UPSTREAM=http://bf-api:8000 \
+    DNS_RESOLVER=127.0.0.11 \
+    NGINX_ENVSUBST_FILTER="^(API_UPSTREAM|DNS_RESOLVER)$"
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY --from=build /app/out /usr/share/nginx/html
+EXPOSE 8080
+USER 101

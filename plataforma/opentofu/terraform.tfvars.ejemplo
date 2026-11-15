@@ -1,0 +1,27 @@
+# Copia este archivo como terraform.tfvars (NO se sube a Git) y cambia los valores.
+
+# Secretos de la aplicación
+db_password = "cambia-esta-clave-larga"
+jwt_secret  = "cambia-este-secreto-de-32-caracteres-o-mas"
+
+# Administrador inicial (opcional)
+admin_email    = ""
+admin_password = ""
+
+# Docker Desktop. Windows (por defecto):
+docker_host = "npipe:////.//pipe//docker_engine"
+# Linux / Docker Desktop en Ubuntu (como en el Laboratorio 2):
+# docker_host = "unix:///home/<tu-usuario>/.docker/desktop/docker.sock"
+
+# Repositorio que vigila Argo CD
+repositorio_git = "https://github.com/Eli-rebolledo/BarberForge-IA.git"
+rama_git        = "main"
+
+# Solo si el repositorio o las imágenes son privados
+github_usuario = ""
+github_token   = ""
+
+# Equipos con poca RAM: solo dev, sin observabilidad, modelo más liviano (cámbialo también en values.yaml)
+# entornos       = ["dev"]
+# observabilidad = false
+# modelo_llm     = "llama3.2:3b"

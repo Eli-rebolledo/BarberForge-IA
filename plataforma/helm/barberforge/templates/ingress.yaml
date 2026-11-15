@@ -1,0 +1,30 @@
+{{- if .Values.ingress.enabled }}
+# Entrada HTTP: /api → API (respuestas del LLM pueden tardar: timeout de 180 s) y / → web.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "bf.nombre" . }}
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-body-size: "4m"   # fotos de barberos y logo
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "bf.nombre" . }}-api
+                port: {name: http}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "bf.nombre" . }}-web
+                port: {name: http}
+{{- end }}

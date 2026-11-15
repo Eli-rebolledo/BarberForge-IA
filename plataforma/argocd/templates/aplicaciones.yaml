@@ -1,0 +1,63 @@
+{{- range $nombre, $cfg := .Values.entornos }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: barberforge-{{ $nombre }}
+  namespace: {{ $.Release.Namespace }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: barberforge
+  source:
+    repoURL: {{ $.Values.repoURL }}
+    targetRevision: {{ $.Values.rama }}
+    path: plataforma/helm/barberforge
+    helm:
+      releaseName: barberforge
+      valueFiles:
+        - values.yaml
+        - values-{{ $nombre }}.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: barberforge-{{ $nombre }}
+  revisionHistoryLimit: 10
+  syncPolicy:
+    {{- if $cfg.automatico }}
+    automated:
+      prune: true      # borra del clúster lo que se borró de Git
+      selfHeal: true   # deshace los cambios hechos a mano con kubectl (drift)
+    {{- end }}
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff: {duration: 10s, factor: 2, maxDuration: 3m}
+  ignoreDifferences:
+    # Con autoescalado, las réplicas las decide el HPA, no Git.
+    - group: apps
+      kind: Deployment
+      name: barberforge-api
+      jsonPointers: ["/spec/replicas"]
+{{- end }}
+{{- if .Values.observabilidad }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: observabilidad
+  namespace: {{ .Release.Namespace }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: barberforge
+  source:
+    repoURL: {{ .Values.repoURL }}
+    targetRevision: {{ .Values.rama }}
+    path: plataforma/helm/observabilidad
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observabilidad
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}
+{{- end }}
