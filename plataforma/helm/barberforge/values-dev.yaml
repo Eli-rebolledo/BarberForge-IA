@@ -1,20 +1,15 @@
 # Entorno dev (namespace barberforge-dev). Argo CD lo sincroniza solo con cada cambio en main.
 entorno: dev
-
 imagenes:
   api:
-    tag: latest   # actualizado por el pipeline (job «gitops»)
+    tag: 25668c33a681b1baf85a13858397004df722efe3 # actualizado por el pipeline (job «gitops»)
   web:
-    tag: latest   # actualizado por el pipeline (job «gitops»)
-
+    tag: 25668c33a681b1baf85a13858397004df722efe3 # actualizado por el pipeline (job «gitops»)
 barberia:
   publicUrl: http://barberforge.local
-
 api:
   replicas: 1
-
 ingress:
   host: barberforge.local
-
 observabilidad:
   enabled: true
