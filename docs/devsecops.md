@@ -52,6 +52,7 @@ también en `.trivyignore` con su justificación.
 | 2026-11-18 | MailHog (`v1.0.1`) ya no tiene mantenimiento | Riesgo contextual | Baja | Aceptado solo en dev/staging; no recibe tráfico de fuera del clúster (NetworkPolicy) |
 | 2026-11-18 | PyJWT 2.9.0 (tokens de sesión) con vulnerabilidades conocidas, detectadas por Trivy `fs`: el job `seguridad` bloqueó el lanzamiento v1.0.0 | Vulnerabilidad conocida | Crítica | **Corregido:** PyJWT 2.15.1; `pip-audit` sin hallazgos y 68 pruebas pasan |
 | 2026-11-18 | `tofu validate` rechazaba el `for_each` del Secret de GHCR porque la condición dependía de `github_token` (variable sensible) | Error de IaC | — | **Corregido:** `nonsensitive()` solo sobre el sí/no; el valor del token sigue oculto |
+| 2026-11-18 | Imagen web sobre `nginx-unprivileged:1.27-alpine` (rama de nginx sin soporte) con vulnerabilidades críticas, detectadas por Trivy `image` antes de publicar | Vulnerabilidad conocida | Crítica | **Corregido:** `nginx-unprivileged:1.30-alpine` (rama estable con soporte) |
 
 ## Revisión del código generado con IA
 

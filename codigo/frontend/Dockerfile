@@ -8,7 +8,8 @@ RUN npm run build
 
 # 2) Lo sirve nginx SIN privilegios (usuario 101, puerto 8080) y reenvía /api al backend.
 #    La dirección del backend llega por variable de entorno, así la misma imagen sirve en Compose y Kubernetes.
-FROM nginxinc/nginx-unprivileged:1.27-alpine
+# Rama estable 1.30 de nginx: la etiqueta se reconstruye con cada parche de nginx y de Alpine.
+FROM nginxinc/nginx-unprivileged:1.30-alpine
 ENV API_UPSTREAM=http://bf-api:8000 \
     DNS_RESOLVER=127.0.0.11 \
     NGINX_ENVSUBST_FILTER="^(API_UPSTREAM|DNS_RESOLVER)$"
