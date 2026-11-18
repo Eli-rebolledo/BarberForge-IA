@@ -53,6 +53,7 @@ también en `.trivyignore` con su justificación.
 | 2026-11-18 | PyJWT 2.9.0 (tokens de sesión) con vulnerabilidades conocidas, detectadas por Trivy `fs`: el job `seguridad` bloqueó el lanzamiento v1.0.0 | Vulnerabilidad conocida | Crítica | **Corregido:** PyJWT 2.15.1; `pip-audit` sin hallazgos y 68 pruebas pasan |
 | 2026-11-18 | `tofu validate` rechazaba el `for_each` del Secret de GHCR porque la condición dependía de `github_token` (variable sensible) | Error de IaC | — | **Corregido:** `nonsensitive()` solo sobre el sí/no; el valor del token sigue oculto |
 | 2026-11-18 | Imagen web sobre `nginx-unprivileged:1.27-alpine` (rama de nginx sin soporte) con vulnerabilidades críticas, detectadas por Trivy `image` antes de publicar | Vulnerabilidad conocida | Crítica | **Corregido:** `nginx-unprivileged:1.30-alpine` (rama estable con soporte) |
+| 2026-11-18 | `brotli-libs` 1.2.0 en la imagen web (CVE-2026-111497, escritura fuera de límites en el descompresor Brotli); Alpine ya publicó 1.2.1 pero la imagen base aún no lo trae | Vulnerabilidad conocida | Crítica | **Corregido:** `apk upgrade` en el Dockerfile, así cada build toma los parches de Alpine aunque la imagen base se atrase |
 
 ## Revisión del código generado con IA
 
