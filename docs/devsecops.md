@@ -50,6 +50,8 @@ también en `.trivyignore` con su justificación.
 | 2026-11-18 | `grafana/otel-lgtm` necesita escribir en su propio disco (KSV-0014) y corre como root (KSV-0012) | Riesgo contextual | Alta / Media | **Aceptado** solo en el laboratorio: namespace propio, sin datos de usuarios, sin capacidades, sin escalada, seccomp por defecto. En producción se usarían los charts oficiales de Grafana, Prometheus, Tempo y Loki |
 | 2026-11-18 | Imágenes de terceros con etiqueta (`pgvector:pg16`, `mailhog:v1.0.1`, `otel-lgtm:0.8.1`) y no con digest | Riesgo contextual | Media | Aceptado: versión fija y escaneo en cada build. Mejora futura: fijar por `@sha256` |
 | 2026-11-18 | MailHog (`v1.0.1`) ya no tiene mantenimiento | Riesgo contextual | Baja | Aceptado solo en dev/staging; no recibe tráfico de fuera del clúster (NetworkPolicy) |
+| 2026-11-18 | PyJWT 2.9.0 (tokens de sesión) con vulnerabilidades conocidas, detectadas por Trivy `fs`: el job `seguridad` bloqueó el lanzamiento v1.0.0 | Vulnerabilidad conocida | Crítica | **Corregido:** PyJWT 2.15.1; `pip-audit` sin hallazgos y 68 pruebas pasan |
+| 2026-11-18 | `tofu validate` rechazaba el `for_each` del Secret de GHCR porque la condición dependía de `github_token` (variable sensible) | Error de IaC | — | **Corregido:** `nonsensitive()` solo sobre el sí/no; el valor del token sigue oculto |
 
 ## Revisión del código generado con IA
 

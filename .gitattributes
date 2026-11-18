@@ -1,2 +1,5 @@
 # Los scripts de shell se ejecutan dentro de contenedores Linux: siempre con saltos de línea LF.
 *.sh text eol=lf
+
+# Scripts de PowerShell: siempre con fin de linea de Windows
+*.ps1 text eol=crlf

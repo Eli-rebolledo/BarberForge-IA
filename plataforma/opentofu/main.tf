@@ -11,7 +11,8 @@ locals {
     "app.kubernetes.io/managed-by" = "opentofu"
   }
   namespaces_app = { for e in var.entornos : e => "barberforge-${e}" }
-  credenciales   = var.github_token != "" && var.github_usuario != ""
+  # nonsensitive: solo se usa el SI/NO (hay token o no), nunca el valor del token, para decidir si se crea el Secret.
+  credenciales = nonsensitive(var.github_token != "" && var.github_usuario != "")
 }
 
 # ---------- namespaces ----------
