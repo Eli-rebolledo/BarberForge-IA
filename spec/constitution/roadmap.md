@@ -14,6 +14,7 @@ Las features siguen el orden en que se construyó el sistema: primero la identid
 | 008 | [Plataforma, despliegue y CI](../features/008-plataforma-y-despliegue/spec.md) | `health`, `arranque`, Alembic | Dockerfile + nginx | 🟢 Implementada |
 | 009 | [Kubernetes, GitOps e IaC](../features/009-kubernetes-gitops-iac/spec.md) | `tareas` (Job de migraciones) | `plataforma/helm`, `plataforma/argocd`, `plataforma/opentofu` | 🟢 Implementada; falta ensayo de recuperación en otro equipo |
 | 010 | [DevSecOps y observabilidad](../features/010-devsecops-y-observabilidad/spec.md) | `core/telemetria`, `core/metricas` | `ci.yml`, `plataforma/helm/observabilidad` | 🟢 Implementada; faltan alertas |
+| 011 | [Predicción de inasistencias (ML)](../features/011-prediccion-inasistencias/spec.md) | `ml/`, `prediccion`, `citas`, `tareas` (migración 007) | `Riesgo`, `/admin` (tarjeta del modelo), `/citas` | 🟡 Implementada con datos sintéticos; falta evaluar con citas reales |
 
 ## Decisiones tomadas
 | Fecha | Decisión | Motivo |
@@ -35,6 +36,9 @@ Las features siguen el orden en que se construyó el sistema: primero la identid
 | 2026-11-18 | **Worker separado y Job de migraciones** | Varias réplicas de la API sin correos duplicados; el esquema se migra antes de actualizar la API. |
 | 2026-11-18 | **Imágenes firmadas con Cosign (sin llaves) y SBOM con Syft** | Procedencia verificable (SLSA / Sigstore) sin administrar llaves privadas. |
 | 2026-11-18 | **OpenTelemetry opcional por variable de entorno** hacia `grafana/otel-lgtm` | Mismo stack del Laboratorio 3; sin variable, cero impacto en pruebas y en Compose. |
+| 2026-11-18 | **Datos sintéticos para el modelo de inasistencias** (feature 011), con supuestos documentados | No hay tiempo de recolectar citas reales antes de la entrega; el sistema queda listo para reentrenar cuando existan. |
+| 2026-11-18 | **Regresión logística, umbral 0,20** | Gana al árbol en AUC (0,71 vs. 0,58) y es explicable; con 0,20 se detectan ~6 de cada 10 inasistencias a cambio de un correo extra. |
+| 2026-11-18 | **Modelos reentrenados en la base de datos, firmados con HMAC** | En Kubernetes el disco es de solo lectura y hay varias réplicas; la firma impide cargar un pickle alterado. |
 | MVP | **Dokploy + Docker Compose** para el despliegue | Es lo que se usó en el Laboratorio 4. |
 | MVP | **IA local con Ollama** (`nomic-embed-text` + `llama3`) y pgvector | Privacidad de los datos; sin dependencias de nube. |
 | MVP | **MailHog** como servidor de correo | Probar recordatorios sin enviar correos reales. |
@@ -45,6 +49,6 @@ Las features siguen el orden en que se construyó el sistema: primero la identid
 - Sección `#barberias` en el inicio: el enlace “Barberías” del `Navbar` apunta a un ancla que no existe → 002.
 - Edición de barberos: los **días de trabajo** ya se editan; faltan nombre, correo y especialidades → 003.
 - Conjunto de preguntas de evaluación del asistente → 007.
-- Predicción de inasistencias (ML + MLflow), con variables de localidad y clima → 011, cuando estén los datos.
+- Evaluar y reentrenar el modelo de inasistencias con citas reales; probar localidad y clima como variables → 011.
 - Alertas de Grafana y ejercicio de incidente → 010.
 - Correo de confirmación al agendar (hoy solo existe el recordatorio) → 006.

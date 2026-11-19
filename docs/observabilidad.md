@@ -8,7 +8,7 @@ OpenTelemetry, Prometheus (métricas), Tempo (trazas), Loki (logs) y Grafana.
 |---|---|---|
 | Trazas | FastAPI, SQLAlchemy y httpx (instrumentación automática) | `POST /api/chat` → consultas SQL → `POST http://…:11434/api/generate` (llama3) |
 | Métricas HTTP | FastAPI | `http_server_request_duration_seconds` (por ruta, método y código) |
-| Métricas de negocio | `app/core/metricas.py` | `barberforge_citas_creadas_total`, `barberforge_citas_canceladas_total`, `barberforge_recordatorios_enviados_total`, `barberforge_chat_respuestas_total{tipo}`, `barberforge_llm_duracion_seconds` |
+| Métricas de negocio | `app/core/metricas.py` | `barberforge_citas_creadas_total`, `barberforge_citas_canceladas_total`, `barberforge_recordatorios_enviados_total{tipo}` (40 o 60 min), `barberforge_ml_predicciones_total{nivel}` (alto o bajo, feature 011), `barberforge_chat_respuestas_total{tipo}`, `barberforge_llm_duracion_seconds` |
 | Logs | `logging` de Python → OTLP | errores de base de datos, recordatorios, indexado del asistente |
 
 La telemetría se activa solo si existe `OTEL_EXPORTER_OTLP_ENDPOINT`. Las pruebas y quien no la use no notan nada.

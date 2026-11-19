@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAviso, Vacio } from "@/components/Aviso";
 import { Icono } from "@/components/Icono";
 import { Panel } from "@/components/Panel";
+import { Riesgo } from "@/components/Riesgo";
 import { useSesion } from "@/components/Sesion";
 import { api, type Cita, type EstadoCita, type Usuario } from "@/lib/api";
 import { cop, ESTADOS, fechaCorta, hoyISO, hora12, TONO_ESTADO } from "@/lib/formato";
@@ -105,7 +106,9 @@ function ListaCitas({ usuario }: { usuario: Usuario }) {
         )}
       </div>
 
-      <div className="info-auto"><Icono n="correo" size={16} /> Los recordatorios por correo se envían solos antes de cada cita pendiente: no tienes que hacer nada.</div>
+      <div className="info-auto"><Icono n="correo" size={16} /> {esCliente
+        ? "Los recordatorios por correo se envían solos antes de cada cita: no tienes que hacer nada."
+        : "Los recordatorios se envían solos 40 minutos antes. Las citas con riesgo alto de inasistencia reciben además un aviso 60 minutos antes."}</div>
 
       <div className="cd tw">
         {filtradas.length ? (
@@ -119,7 +122,10 @@ function ListaCitas({ usuario }: { usuario: Usuario }) {
                   <td data-l={esCliente ? "Barbero" : "Cliente"}>{esCliente ? c.barber : <>{c.client}{c.walk_in && <i>En el local{c.client_phone ? ` · ${c.client_phone}` : ""}</i>}</>}</td>
                   {!esCliente && <td data-l="Barbero">{c.barber}</td>}
                   <td data-l="Total">{cop(c.price)}</td>
-                  <td data-l="Estado"><span className={`pill ${TONO_ESTADO[c.status]}`}><i className="dot" />{ESTADOS[c.status] ?? c.status}</span></td>
+                  <td data-l="Estado">
+                    <span className={`pill ${TONO_ESTADO[c.status]}`}><i className="dot" />{ESTADOS[c.status] ?? c.status}</span>
+                    {!esCliente && esActiva(c) && <Riesgo cita={c} />}
+                  </td>
                   <td><Acciones cita={c} rol={usuario.role} onAccion={(a) => ejecutar(c, a)} /></td>
                 </tr>
               ))}

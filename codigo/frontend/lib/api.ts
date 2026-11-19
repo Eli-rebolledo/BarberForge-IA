@@ -120,6 +120,23 @@ export interface Cita {
   walk_in: boolean;
   price: number;
   duration: number;
+  // Feature 011: probabilidad de inasistencia (0 a 1). Solo llega para barberos y administradores.
+  riesgo?: number | null;
+  riesgo_alto?: boolean;
+}
+
+/** Feature 011: modelo de predicción de inasistencias en uso. */
+export interface ModeloInasistencia {
+  activo: boolean;
+  umbral: number;
+  citas_proximas: number;
+  citas_riesgo_alto: number;
+  version?: string | null;
+  origen?: "sintetico" | "real" | null;
+  algoritmo?: string | null;
+  entrenado?: string | null;
+  metricas?: { auc: number | null; recall: number; precision: number; alertas_pct: number; n: number } | null;
+  importancia?: Record<string, number> | null;
 }
 
 export interface CitaIn {
@@ -343,6 +360,7 @@ export const api = {
 
   // administración
   estadisticas: () => pedir<Estadisticas>("/admin/stats"),
+  modeloInasistencia: () => pedir<ModeloInasistencia>("/admin/ml"),
   ajustes: () => pedir<Ajustes>("/admin/settings"),
   clientes: () => pedir<ClienteBasico[]>("/clients"),
   recuperar: (email: string) => pedir<Ok>("/password/forgot", "POST", { email }),

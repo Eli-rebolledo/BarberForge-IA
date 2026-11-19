@@ -10,7 +10,10 @@ _medidor = metrics.get_meter("barberforge")
 
 citas_creadas = _medidor.create_counter("barberforge.citas.creadas", description="Citas agendadas")
 citas_canceladas = _medidor.create_counter("barberforge.citas.canceladas", description="Citas canceladas")
-recordatorios = _medidor.create_counter("barberforge.recordatorios.enviados", description="Recordatorios enviados")
+recordatorios = _medidor.create_counter(
+    "barberforge.recordatorios.enviados", description="Recordatorios enviados (tipo: 40 = confirmación, 60 = aviso extra)")
+predicciones = _medidor.create_counter(
+    "barberforge.ml.predicciones", description="Citas evaluadas por el modelo de inasistencias (nivel: alto, bajo)")
 chat_respuestas = _medidor.create_counter(
     "barberforge.chat.respuestas", description="Respuestas del asistente por tipo (llm, aprendida, accion, sin_respuesta)")
 duracion_llm = _medidor.create_histogram(

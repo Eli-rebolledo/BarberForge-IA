@@ -114,8 +114,14 @@ Registro/login con roles · catálogo · barberos · disponibilidad (con **días
 - **DevSecOps** (spec 010): Trivy (código, configuración e imágenes), SBOM con Syft, firma y verificación con Cosign, contenedores sin root y de solo lectura.
 - **Observabilidad**: OpenTelemetry → Grafana con un tablero de SLI/SLO (disponibilidad 99 %, p95 < 500 ms).
 
+## Novedades (migración 007 · machine learning)
+- **Predicción de inasistencias** (spec 011): al agendar, un modelo estima la probabilidad de que el cliente no llegue. Con riesgo de 0,20 o más, el cliente recibe un **aviso extra 60 minutos antes** además del recordatorio de confirmación de los 40 minutos; si no, solo el de 40.
+- **Panel:** insignia «Riesgo N %» en las citas (solo barbero y administrador) y tarjeta con el modelo en uso, su AUC y cuántas citas próximas tienen riesgo alto.
+- **Datos sintéticos documentados:** como aún no hay citas reales, el modelo inicial se entrena con 5.000 citas generadas con reglas de la literatura (`codigo/backend/app/ml/supuestos.md`). Se comparan regresión logística y árbol de decisión, con registro en **MLflow**.
+- **Reentrenamiento:** `python -m app.tareas reentrenar` (CronJob semanal en Kubernetes) entrena con las citas reales cerradas y solo reemplaza el modelo si es mejor. Guía completa: `docs/ml-prediccion-inasistencias.md`.
+
 ## Pendiente
-Predicción de inasistencias con ML (después de recolectar los datos), bot de WhatsApp, corte por referencia, días sin atención y ausencias de barberos (RF09, RF17), alertas de Grafana.
+Evaluar el modelo de inasistencias con citas reales, bot de WhatsApp, corte por referencia, días sin atención y ausencias de barberos (RF09, RF17), alertas de Grafana.
 
 ## Diagnóstico rápido
 `GET /api/health` responde `{"servicio":"barberforge-ai","estado":"ok","base_de_datos":"ok"}`. Si la base falla, `base_de_datos` muestra el motivo (por ejemplo `password authentication failed`: la clave `DB_PASSWORD` no coincide con la del volumen `pgdata`; se corrige borrando ese volumen en Dokploy y redesplegando). Para Kubernetes: `GET /health` (liveness) y `GET /health/db` (readiness).

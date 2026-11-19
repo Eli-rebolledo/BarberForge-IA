@@ -54,6 +54,11 @@ class Settings(BaseSettings):
     # Nombre del entorno (local, dev, staging): aparece en la telemetría y en /api/health.
     entorno: str = "local"
 
+    # Predicción de inasistencias (feature 011)
+    ml_activo: bool = True               # False = sin predicción: solo el recordatorio de 40 min, como antes
+    ml_umbral_riesgo: float = 0.20       # desde este riesgo se manda también el aviso de 60 min
+    ml_minimo_reentrenamiento: int = 200  # citas reales cerradas necesarias para reentrenar
+
     @property
     def url_bd(self) -> str | URL:
         if self.database_url:

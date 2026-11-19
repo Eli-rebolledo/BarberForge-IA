@@ -47,3 +47,17 @@ class AjustesOut(BaseModel):
     recordatorio_minutos: int
     confirmar_minutos: int
     buzon_url: str
+
+
+class ModeloInasistenciaOut(BaseModel):
+    """Feature 011: estado del modelo de inasistencias para el panel del administrador."""
+    activo: bool
+    umbral: float
+    citas_proximas: int
+    citas_riesgo_alto: int
+    version: str | None = None
+    origen: str | None = None  # «sintetico» o «real»
+    algoritmo: str | None = None
+    entrenado: str | None = None
+    metricas: dict | None = None
+    importancia: dict[str, float] | None = None
