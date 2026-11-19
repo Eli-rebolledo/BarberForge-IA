@@ -1,5 +1,6 @@
-# 1) Compila el sitio estático con Next.js
-FROM node:22-alpine AS build
+# 1) Compila el sitio estático con Next.js. Corre en la arquitectura de quien construye (el resultado son archivos
+#    estáticos, iguales para amd64 y arm64), así la imagen multiarquitectura no compila Next.js dos veces.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci

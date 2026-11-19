@@ -10,7 +10,7 @@ kubectl config use-context minikube >/dev/null
 
 if [ ! -f "$TOFU/terraform.tfvars" ]; then
   cp "$TOFU/terraform.tfvars.ejemplo" "$TOFU/terraform.tfvars"
-  echo "Se creó plataforma/opentofu/terraform.tfvars: cambia las claves y el docker_host de Linux, y repite."
+  echo "Se creó plataforma/opentofu/terraform.tfvars: cambia las claves y pon docker_host = \"unix:///var/run/docker.sock\" (Mac y Linux), y repite."
   exit 1
 fi
 

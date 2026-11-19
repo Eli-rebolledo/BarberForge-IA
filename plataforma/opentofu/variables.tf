@@ -112,7 +112,7 @@ variable "admin_password" {
 # ---------- Ollama en Docker Desktop ----------
 
 variable "docker_host" {
-  description = "Conexión al Docker local. Windows: npipe:////.//pipe//docker_engine · Linux: unix:///var/run/docker.sock"
+  description = "Conexión al Docker local. Windows: npipe:////.//pipe//docker_engine · Mac y Linux: unix:///var/run/docker.sock"
   type        = string
   default     = "npipe:////.//pipe//docker_engine"
 

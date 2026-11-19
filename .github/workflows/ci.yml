@@ -135,6 +135,9 @@ jobs:
           contexto=codigo/backend; [ "${{ matrix.componente }}" = web ] && contexto=codigo/frontend
           echo "IMAGEN=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/barberforge-${{ matrix.componente }}" >> "$GITHUB_ENV"
           echo "CONTEXTO=$contexto" >> "$GITHUB_ENV"
+      - name: Emulación para construir también la versión ARM64 (Mac con Apple Silicon)
+        if: env.PUBLICAR == 'true'
+        uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
       - name: Construir (local, para escanear antes de publicar)
         uses: docker/build-push-action@v7
@@ -165,6 +168,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: ${{ env.CONTEXTO }}
+          platforms: linux/amd64,linux/arm64   # Windows/Linux (amd64) y Mac con chip M (arm64)
           push: true
           tags: |
             ${{ env.IMAGEN }}:${{ github.sha }}
