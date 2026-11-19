@@ -308,3 +308,7 @@ textarea{resize:vertical;line-height:1.5}
 .ajustes .ancho.identidad{flex-direction:column;align-items:stretch;justify-content:flex-start}
 .confirmar .det dd{text-transform:none}.confirmar .det dd::first-letter{text-transform:uppercase}.confirmar .dd-foto{justify-content:flex-end}
 
+
+/* Feature 011 · predicción de inasistencias */
+.pill.riesgo{margin-left:6px}
+.factores{margin-top:10px}

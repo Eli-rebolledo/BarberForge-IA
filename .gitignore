@@ -9,6 +9,11 @@ __pycache__/
 .ruff_cache/
 *.db
 
+# Machine learning (feature 011): datos sintéticos regenerables y experimentos locales de MLflow
+codigo/backend/datos/
+mlruns/
+mlartifacts/
+
 # Node / Next.js
 node_modules/
 .next/

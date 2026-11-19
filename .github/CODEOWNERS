@@ -73,3 +73,15 @@
 /docs/devsecops.md                                  @JavierGalindez
 /docs/observabilidad.md                             @JavierGalindez
 /spec/features/010-devsecops-y-observabilidad/      @JavierGalindez
+
+# 011 · Predicción de inasistencias (ML). Va al final: en CODEOWNERS gana la última coincidencia.
+/codigo/backend/app/ml/                             @MiyerACI
+/codigo/backend/app/services/prediccion.py          @MiyerACI
+/codigo/backend/app/models/modelo_ml.py             @MiyerACI
+/codigo/backend/alembic/versions/007_prediccion_inasistencias.py  @MiyerACI
+/codigo/backend/requirements-ml.txt                 @MiyerACI
+/codigo/backend/tests/test_prediccion.py            @MiyerACI
+/codigo/frontend/components/Riesgo.tsx              @MiyerACI
+/plataforma/helm/barberforge/templates/reentrenamiento-cronjob.yaml  @MiyerACI
+/docs/ml-prediccion-inasistencias.md                @MiyerACI
+/spec/features/011-prediccion-inasistencias/        @MiyerACI

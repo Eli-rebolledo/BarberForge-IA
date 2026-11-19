@@ -34,6 +34,10 @@ services:
       BARBERIA_NOMBRE: ${BARBERIA_NOMBRE:-BarberForge Popayán}
       ZONA_HORARIA: ${ZONA_HORARIA:-America/Bogota}
       ENTORNO: ${ENTORNO:-local}
+      # Predicción de inasistencias (feature 011)
+      ML_ACTIVO: ${ML_ACTIVO:-true}
+      ML_UMBRAL_RIESGO: ${ML_UMBRAL_RIESGO:-0.20}
+      ML_MINIMO_REENTRENAMIENTO: ${ML_MINIMO_REENTRENAMIENTO:-200}
       # Observabilidad: vacío = apagada. Con «docker compose --profile observabilidad up» usa
       # OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318 en el .env
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}

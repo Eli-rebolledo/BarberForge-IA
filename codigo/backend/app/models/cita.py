@@ -4,16 +4,19 @@ from sqlalchemy import (
     Column,
     Date,
     DateTime,
+    Float,
     ForeignKey,
     Index,
     Integer,
     Table,
     Text,
     Time,
+    func,
     text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.tiempo import ahora_utc
 from app.db import Base
 
 ESTADOS_ACTIVOS = ("pendiente", "confirmada")
@@ -53,6 +56,12 @@ class Cita(Base):
     status: Mapped[str] = mapped_column(Text, default="pendiente", server_default="pendiente")
     token_hash: Mapped[str | None] = mapped_column(Text)
     reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Feature 011 · predicción de inasistencias
+    # Cuándo se agendó (para la anticipación). Las citas anteriores a la migración 007 quedan en nulo.
+    created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=ahora_utc,
+                                                        server_default=func.now())
+    no_show_risk: Mapped[float | None] = mapped_column(Float)  # probabilidad de inasistencia, 0 a 1
+    early_reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # aviso de 60 min
 
     cliente: Mapped["Usuario | None"] = relationship(foreign_keys=[client_id], lazy="joined")  # noqa: F821
     barbero: Mapped["Usuario"] = relationship(foreign_keys=[barber_id], lazy="joined")  # noqa: F821
