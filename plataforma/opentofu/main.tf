@@ -142,7 +142,9 @@ resource "helm_release" "gitops" {
     repoURL        = var.repositorio_git
     rama           = var.rama_git
     observabilidad = var.observabilidad
-    entornos       = { for e in var.entornos : e => { automatico = e == "dev" } }
+    # Los entornos que no se piden van en null: Helm combina mapas con los valores por defecto del chart,
+    # y null es la forma de quitar uno (si no, Argo CD crearia igual la aplicacion de staging).
+    entornos = { for e in ["dev", "staging"] : e => contains(var.entornos, e) ? { automatico = e == "dev" } : null }
   })]
 
   depends_on = [
