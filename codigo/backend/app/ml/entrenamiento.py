@@ -165,7 +165,7 @@ def registrar_en_mlflow(paquete: dict, resultados: dict, parametros: dict) -> st
                                "filas_entrenamiento": paquete["filas_entrenamiento"],
                                "filas_prueba": paquete["filas_prueba"]})
             m = r["metricas"]
-            mlflow.log_metrics({k: v for k, v in m.items() if isinstance(v, (int, float)) and v is not None})
+            mlflow.log_metrics({k: v for k, v in m.items() if isinstance(v, int | float)})
             mlflow.log_metrics({k: float(v) for k, v in m["matriz"].items()})
             mlflow.log_dict(r["importancia"], "importancia.json")
             if nombre == paquete["algoritmo"]:
