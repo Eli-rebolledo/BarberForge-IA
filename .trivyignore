@@ -5,3 +5,13 @@
 # namespace propio y sin datos de usuarios. Revisado: 2026-11-18.
 KSV-0014
 AVD-KSV-0014
+
+# nginx 1.30.6 de la imagen base (nginx-unprivileged:1.30-alpine): 4 CVE criticas corregidas en nginx 1.30.7,
+# que la imagen base aun no trae (apk upgrade no lo actualiza: nginx viene del repositorio de nginx.org).
+# Ninguna aplica a nuestra configuracion (codigo/frontend/nginx.conf.template): solo "listen 8080" con HTTP/1.1
+# detras del Ingress; no usamos el proxy de correo (mail), ni HTTP/2, ni HTTP/3.
+# Vencen el 2026-12-19: ese dia Trivy vuelve a fallar si la imagen base sigue sin actualizarse. Revisado: 2026-11-19.
+CVE-2026-113425 exp:2026-12-19
+CVE-2026-121810 exp:2026-12-19
+CVE-2026-123007 exp:2026-12-19
+CVE-2026-123633 exp:2026-12-19
