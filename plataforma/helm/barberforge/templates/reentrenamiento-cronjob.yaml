@@ -1,0 +1,52 @@
+{{- if .Values.ml.reentrenamiento.enabled }}
+# Feature 011: reentrena el modelo de inasistencias con las citas reales cerradas (completadas / no asistió).
+# Si no hay datos suficientes no cambia nada; si el modelo nuevo es mejor, queda activo en la tabla ml_models
+# y la API y el worker lo cargan solos en menos de 5 minutos.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "bf.nombre" . }}-reentrenamiento
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+    app.kubernetes.io/component: reentrenamiento
+spec:
+  schedule: {{ .Values.ml.reentrenamiento.horario | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 604800
+      template:
+        metadata:
+          labels:
+            {{- include "bf.etiquetas" . | nindent 12 }}
+            app.kubernetes.io/component: reentrenamiento
+        spec:
+          restartPolicy: Never
+          serviceAccountName: {{ include "bf.nombre" . }}
+          automountServiceAccountToken: false
+          {{- include "bf.pullSecrets" . | nindent 10 }}
+          securityContext:
+            {{- include "bf.seguridadPod" . | nindent 12 }}
+            runAsUser: 10001
+            runAsGroup: 10001
+          containers:
+            - name: reentrenamiento
+              image: {{ include "bf.imagenApi" . }}
+              imagePullPolicy: {{ .Values.imagenes.pullPolicy }}
+              command: ["python", "-m", "app.tareas", "reentrenar"]
+              {{- include "bf.entornoApi" . | nindent 14 }}
+              resources:
+                requests: {cpu: 100m, memory: 256Mi}
+                limits: {cpu: "1", memory: 768Mi}
+              securityContext:
+                {{- include "bf.seguridadContenedor" . | nindent 16 }}
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}
+{{- end }}

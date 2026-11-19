@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 from app.core.dependencias import require_roles
 from app.db import get_db
 from app.models import Rol, Usuario
-from app.schemas.admin import AjustesOut, EstadisticasOut
+from app.schemas.admin import AjustesOut, EstadisticasOut, ModeloInasistenciaOut
 from app.schemas.usuario import ClienteOut
-from app.services import estadisticas
+from app.services import estadisticas, prediccion
 
 router = APIRouter(prefix="/api", tags=["administración"])
 
@@ -14,6 +14,12 @@ router = APIRouter(prefix="/api", tags=["administración"])
 @router.get("/admin/stats", response_model=EstadisticasOut)
 def estadisticas_panel(_: Usuario = Depends(require_roles(Rol.ADMIN)), db: Session = Depends(get_db)) -> EstadisticasOut:
     return estadisticas.resumen(db)
+
+
+@router.get("/admin/ml", response_model=ModeloInasistenciaOut)
+def modelo_inasistencia(_: Usuario = Depends(require_roles(Rol.ADMIN)), db: Session = Depends(get_db)) -> dict:
+    """Feature 011: qué modelo está en uso, sus métricas y cuántas citas próximas tienen riesgo alto."""
+    return prediccion.info(db)
 
 
 @router.get("/admin/settings", response_model=AjustesOut)

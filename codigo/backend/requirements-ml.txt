@@ -1,0 +1,6 @@
+# Solo para entrenar en tu equipo y ver los experimentos (no va en la imagen de la API):
+#   pip install -r requirements-ml.txt
+#   python -m app.tareas entrenar
+#   mlflow ui --backend-store-uri sqlite:///mlflow.db      → http://localhost:5000
+-r requirements.txt
+mlflow==3.18.0

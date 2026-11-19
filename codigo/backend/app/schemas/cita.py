@@ -34,6 +34,9 @@ class CitaOut(BaseModel):
     walk_in: bool = False
     price: int
     duration: int
+    # Feature 011: solo lo ven el barbero y el administrador (al cliente no se le muestra su «riesgo»).
+    riesgo: float | None = None
+    riesgo_alto: bool = False
 
 
 class EstadoCitaIn(BaseModel):

@@ -15,3 +15,8 @@ opentelemetry-exporter-otlp-proto-http==1.28.2
 opentelemetry-instrumentation-fastapi==0.49b2
 opentelemetry-instrumentation-sqlalchemy==0.49b2
 opentelemetry-instrumentation-httpx==0.49b2
+# Predicción de inasistencias (feature 011). La versión de scikit-learn debe ser la misma con la que se entrenó
+# app/ml/modelo_inasistencia.joblib: si se cambia, hay que reentrenar (python -m app.tareas entrenar).
+scikit-learn==1.9.1
+numpy==2.5.5
+joblib==1.6.0

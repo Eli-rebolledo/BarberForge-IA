@@ -48,6 +48,16 @@ worker:
 migraciones:
   enabled: true
 
+# Feature 011 · predicción de inasistencias.
+ml:
+  activo: true          # false = sin predicción: solo el recordatorio de 40 min
+  umbralRiesgo: "0.20"  # desde este riesgo se envía también el aviso de 60 min
+  minimoReentrenamiento: 200
+  # CronJob que reentrena con las citas reales cerradas. Si no hay datos suficientes, no cambia nada.
+  reentrenamiento:
+    enabled: true
+    horario: "0 3 * * 1"   # lunes a las 3 a. m. (zona del clúster)
+
 web:
   replicas: 1
   recursos:

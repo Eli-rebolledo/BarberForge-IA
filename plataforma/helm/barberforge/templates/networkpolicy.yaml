@@ -13,7 +13,7 @@ spec:
       app.kubernetes.io/instance: {{ .Release.Name }}
   policyTypes: ["Ingress"]
 ---
-# La base de datos solo acepta conexiones de la API, el worker y el Job de migraciones.
+# La base de datos solo acepta conexiones de la API, el worker, el Job de migraciones y el de reentrenamiento.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -29,7 +29,7 @@ spec:
     - from:
         - podSelector:
             matchExpressions:
-              - {key: app.kubernetes.io/component, operator: In, values: [api, worker, migraciones]}
+              - {key: app.kubernetes.io/component, operator: In, values: [api, worker, migraciones, reentrenamiento]}
       ports:
         - {protocol: TCP, port: 5432}
 ---

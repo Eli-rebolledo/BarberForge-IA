@@ -13,11 +13,12 @@ from app.core.tiempo import ahora_local, ahora_utc, hora12
 from app.models import Cita, Rol, Servicio, Usuario
 from app.models.cita import ESTADOS_ACTIVOS
 from app.schemas.cita import CitaIn, CitaOut
-from app.services import barberia, correo
+from app.services import barberia, correo, prediccion
 from app.services import disponibilidad as disp
 from app.services.errores import Conflicto, DatosInvalidos, NoEncontrado
 
 MINUTOS_RECORDATORIO = 40   # el correo sale 40 min antes de la cita
+MINUTOS_AVISO_EXTRA = 60    # feature 011: aviso adicional solo para citas con riesgo alto de inasistencia
 MINUTOS_PARA_CONFIRMAR = 15  # si no confirma en 15 min, se cancela y la franja queda libre
 ESTADOS_CIERRE = ("completada", "inasistencia")
 
@@ -75,6 +76,7 @@ def agendar(db: Session, actor: Usuario, datos: CitaIn) -> Cita:
                         for f in disp.franjas_libres(db, barbero.id, limite=3, minutos=minutos)]
         raise Conflicto("Esa franja ya no está disponible", alternatives=alternativas)
     metricas.citas_creadas.add(1, {"rol": str(actor.role), "servicios": len(servicios)})
+    prediccion.actualizar_riesgo(db, cita)  # feature 011; si el modelo falla, la cita queda igual (sin riesgo)
     return cita
 
 
@@ -96,13 +98,15 @@ def correo_de_creacion(cita_id: int) -> None:
 
 # ---------- consultar ----------
 
-def _salida(c: Cita) -> CitaOut:
+def _salida(c: Cita, ver_riesgo: bool = True) -> CitaOut:
     nombres = [s.name for s in c.servicios] or [c.servicio.name]
+    riesgo = c.no_show_risk if ver_riesgo else None
     return CitaOut(id=c.id, date=c.appointment_date, time=f"{c.start_time:%H:%M}", status=c.status,
                    service=" + ".join(nombres), services=nombres, barber=c.barbero.full_name, barber_id=c.barber_id,
                    client=c.cliente.full_name if c.cliente else (c.guest_name or "Cliente"),
                    client_phone=c.guest_phone, walk_in=c.client_id is None,
-                   price=c.price_cop or c.servicio.price_cop, duration=c.duration_minutes)
+                   price=c.price_cop or c.servicio.price_cop, duration=c.duration_minutes,
+                   riesgo=riesgo, riesgo_alto=prediccion.es_alto(riesgo))
 
 
 def listar_para(db: Session, usuario: Usuario, limite: int = 500) -> list[CitaOut]:
@@ -112,7 +116,7 @@ def listar_para(db: Session, usuario: Usuario, limite: int = 500) -> list[CitaOu
         q = q.where(Cita.client_id == usuario.id)
     elif usuario.role == Rol.BARBERO:
         q = q.where(Cita.barber_id == usuario.id)
-    return [_salida(c) for c in db.scalars(q).unique()]
+    return [_salida(c, ver_riesgo=usuario.role != Rol.CLIENTE) for c in db.scalars(q).unique()]
 
 
 def _obtener(db: Session, cita_id: int) -> Cita:
@@ -164,8 +168,44 @@ def enviar_recordatorio(db: Session, cita_id: int) -> bool:
                   f"Tu cita de {cita.servicio.name} es el {cita.appointment_date} a las {hora12(cita.start_time)}.\n"
                   f"Confirma en los próximos {MINUTOS_PARA_CONFIRMAR} minutos: {url}/api/confirm/{token}\n"
                   "Si no confirmas, la cita se cancelará y la franja quedará libre.")
-    metricas.recordatorios.add(1)
+    metricas.recordatorios.add(1, {"tipo": "40"})
     return True
+
+
+def enviar_aviso_previo(db: Session, cita: Cita) -> bool:
+    """Feature 011: aviso extra 60 min antes, solo para citas con riesgo alto. No pide confirmar: la
+    confirmación sigue llegando a los 40 min. Se marca como enviado aunque el correo falle (no se reintenta)."""
+    destino = cita.cliente.email if cita.cliente else cita.guest_email
+    cita.early_reminder_sent_at = ahora_utc()
+    db.commit()
+    if not destino:
+        return False
+    siguiente = (f"En unos minutos te llegará otro correo para confirmarla: confirma en los {MINUTOS_PARA_CONFIRMAR} "
+                 "minutos siguientes o la franja quedará libre para otro cliente."
+                 if cita.status == "pendiente" else "Tu cita ya está confirmada. ¡Te esperamos!")
+    correo.enviar(destino, f"Tu cita en {barberia.nombre(db)} es en una hora",
+                  f"Te recordamos tu cita de {' + '.join(s.name for s in cita.servicios) or cita.servicio.name} "
+                  f"hoy a las {hora12(cita.start_time)} con {cita.barbero.full_name}.\n{siguiente}\n\n"
+                  "Si ya no puedes ir, cancélala desde «Mis citas»: así otra persona puede usar el turno.")
+    metricas.recordatorios.add(1, {"tipo": "60"})
+    return True
+
+
+def procesar_avisos_previos(db: Session) -> None:
+    """Citas activas que empiezan entre 40 y 60 minutos desde ahora y tienen riesgo alto → aviso extra.
+    Si la cita no tiene riesgo calculado (p. ej. se creó antes de esta feature), se calcula aquí."""
+    prediccion.modelo_activo(db)  # carga el modelo en el primer ciclo y detecta uno nuevo cada 5 minutos
+    ahora = ahora_local()
+    desde, hasta = ahora + timedelta(minutes=MINUTOS_RECORDATORIO), ahora + timedelta(minutes=MINUTOS_AVISO_EXTRA)
+    candidatas = db.scalars(select(Cita).where(
+        Cita.status.in_(ESTADOS_ACTIVOS), Cita.early_reminder_sent_at.is_(None),
+        Cita.appointment_date.between(ahora.date(), hasta.date())))
+    for cita in list(candidatas.unique()):
+        if not desde < datetime.combine(cita.appointment_date, cita.start_time) <= hasta:
+            continue
+        riesgo = cita.no_show_risk if cita.no_show_risk is not None else prediccion.actualizar_riesgo(db, cita)
+        if prediccion.es_alto(riesgo):
+            enviar_aviso_previo(db, cita)
 
 
 def recordar(db: Session, cita_id: int) -> None:
@@ -185,7 +225,9 @@ def confirmar_por_token(db: Session, token: str) -> bool:
 
 
 def procesar_recordatorios(db: Session) -> None:
-    """Tarea periódica: envía recordatorios próximos y cancela las citas que no se confirmaron a tiempo."""
+    """Tarea periódica: aviso extra a las citas de riesgo alto (60 min), recordatorios con confirmación (40 min)
+    y cancela las citas que no se confirmaron a tiempo."""
+    procesar_avisos_previos(db)
     ahora = ahora_local()
     ventana = ahora + timedelta(minutes=MINUTOS_RECORDATORIO)
     pendientes = db.scalars(select(Cita).where(

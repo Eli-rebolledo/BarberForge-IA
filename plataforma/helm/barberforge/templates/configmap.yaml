@@ -23,6 +23,9 @@ data:
   BARBERIA_DIRECCION: {{ .Values.barberia.direccion | quote }}
   ZONA_HORARIA: {{ .Values.barberia.zonaHoraria | quote }}
   SEED_DEMO: {{ .Values.barberia.seedDemo | quote }}
+  ML_ACTIVO: {{ .Values.ml.activo | quote }}
+  ML_UMBRAL_RIESGO: {{ .Values.ml.umbralRiesgo | quote }}
+  ML_MINIMO_REENTRENAMIENTO: {{ .Values.ml.minimoReentrenamiento | quote }}
   {{- if .Values.observabilidad.enabled }}
   OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.observabilidad.endpoint | quote }}
   OTEL_SEMCONV_STABILITY_OPT_IN: "http"
