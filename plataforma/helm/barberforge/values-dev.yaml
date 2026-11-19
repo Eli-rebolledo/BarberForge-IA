@@ -2,9 +2,9 @@
 entorno: dev
 imagenes:
   api:
-    tag: eb39e0ff2d5f8d1e450419887d6af19c11088546 # actualizado por el pipeline (job «gitops»)
+    tag: 9990d8b59c4071d2c4f81c3be1a650f32b4cd0db # actualizado por el pipeline (job «gitops»)
   web:
-    tag: eb39e0ff2d5f8d1e450419887d6af19c11088546 # actualizado por el pipeline (job «gitops»)
+    tag: 9990d8b59c4071d2c4f81c3be1a650f32b4cd0db # actualizado por el pipeline (job «gitops»)
 barberia:
   publicUrl: http://barberforge.local
 api:
