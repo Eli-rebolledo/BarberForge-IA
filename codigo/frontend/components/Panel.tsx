@@ -18,7 +18,8 @@ const PESTANAS: Record<Rol, Pestana[]> = {
   administrador: [
     ["/admin", "Panel", "grafico"], ["/citas", "Citas", "calendario"], ["/admin/barberos", "Barberos", "usuarios"],
     ["/admin/servicios", "Servicios", "tijera"], ["/admin/disponibilidad", "Calendario", "reloj"],
-    ["/admin/asistente", "Asistente IA", "chispa"],
+    ["/admin/festivos", "Festivos", "candado"],
+    ["/admin/asistente", "Asistente IA", "chispa"], ["/admin/pqrs", "PQRS", "correo"],
   ],
 };
 const DERECHA: Pestana[] = [["/ajustes", "Ajustes", "ajustes"], ["/cuenta", "Mi cuenta", "usuario"]];
