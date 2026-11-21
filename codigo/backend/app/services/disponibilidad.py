@@ -6,7 +6,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.core.tiempo import ahora_local, hora12, hoy
-from app.models import Cita, Disponibilidad, Rol, Usuario
+from app.models import AusenciaBarbero, Cita, DiaCerrado, Disponibilidad, Rol, Usuario
 from app.models.cita import ESTADOS_ACTIVOS
 from app.schemas.disponibilidad import GenerarDisponibilidadIn
 from app.services import barberos as barberos_srv
@@ -16,17 +16,34 @@ DOMINGO = 6
 DIAS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"]
 
 
+def dias_bloqueados(db: Session, barbero_id: int | None, desde: date, hasta: date) -> dict[date, str]:
+    """Días sin atención entre dos fechas: festivos de la barbería (RF09) y ausencias del barbero (RF17).
+    Devuelve {fecha: motivo}. Con barbero_id=None solo cuenta los festivos."""
+    bloqueados = {d.day: f"Festivo: {d.motivo}" for d in db.scalars(
+        select(DiaCerrado).where(DiaCerrado.day.between(desde, hasta)))}
+    if barbero_id is not None:
+        for a in db.scalars(select(AusenciaBarbero).where(AusenciaBarbero.barber_id == barbero_id,
+                                                          AusenciaBarbero.date_from <= hasta,
+                                                          AusenciaBarbero.date_to >= desde)):
+            dia = max(a.date_from, desde)
+            while dia <= min(a.date_to, hasta):
+                bloqueados.setdefault(dia, f"Ausencia: {a.motivo}")
+                dia += timedelta(days=1)
+    return bloqueados
+
+
 def generar_franjas(db: Session, barbero_id: int, desde: date, hasta: date,
                     inicio: time, fin: time, minutos: int, dias: set[int] | None = None) -> int:
     """Crea las franjas de los días de trabajo (por defecto lunes a sábado) sin duplicar. Devuelve cuántas creó."""
     dias = dias if dias is not None else set(range(DOMINGO))
+    bloqueados = dias_bloqueados(db, barbero_id, desde, hasta)  # festivos y ausencias no reciben franjas
     existentes = {(d.slot_date, d.start_time) for d in db.scalars(
         select(Disponibilidad).where(Disponibilidad.barber_id == barbero_id,
                                      Disponibilidad.slot_date.between(desde, hasta)))}
     nuevas = 0
     dia = desde
     while dia <= hasta:
-        if dia.weekday() in dias:
+        if dia.weekday() in dias and dia not in bloqueados:
             t, limite = datetime.combine(dia, inicio), datetime.combine(dia, fin)
             while t < limite:
                 if (dia, t.time()) not in existentes:
@@ -105,8 +122,11 @@ def franjas_libres(db: Session, barbero_id: int, limite: int = 80, fecha: date |
         elif d == hoy_ and fin > ahora_min:  # cita completada antes de tiempo: lo que sobra queda libre
             liberado.add(d)
 
+    bloqueados = dias_bloqueados(db, barbero_id, min(inicios), max(inicios)) if inicios else {}
     libres: list[FranjaLibre] = []
     for dia in sorted(inicios):
+        if dia in bloqueados:  # festivo o ausencia creada después de generar la agenda
+            continue
         starts = sorted(inicios[dia])
         paso = min((b - a for a, b in zip(starts, starts[1:], strict=False)), default=30) or 30
         ventanas: list[list[int]] = []  # tramos continuos de atención
@@ -152,7 +172,10 @@ def calendario(db: Session, barbero_id: int, mes: str) -> list[dict]:
     for c in db.scalars(select(Cita).where(Cita.barber_id == barbero_id, Cita.status.in_(ESTADOS_ACTIVOS),
                                            Cita.appointment_date.between(desde, hasta))).unique():
         dias.setdefault(c.appointment_date, [0, 0])[1] += 1
-    return [{"date": str(d), "total": v[0], "ocupadas": v[1]} for d, v in sorted(dias.items())]
+    bloqueos = dias_bloqueados(db, barbero_id, desde, hasta)
+    for d in bloqueos:
+        dias.setdefault(d, [0, 0])
+    return [{"date": str(d), "total": v[0], "ocupadas": v[1], "bloqueo": bloqueos.get(d)} for d, v in sorted(dias.items())]
 
 
 def cerrar_dias(db: Session, barbero_id: int, fechas: list[date]) -> int:

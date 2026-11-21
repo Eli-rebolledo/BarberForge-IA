@@ -28,3 +28,4 @@ class DiaCalendarioOut(BaseModel):
     date: str
     total: int  # franjas del día
     ocupadas: int  # citas activas ese día
+    bloqueo: str | None = None  # «Festivo: …» o «Ausencia: …» si ese día no se atiende
