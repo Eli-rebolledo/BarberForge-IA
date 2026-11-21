@@ -8,7 +8,7 @@ interface Props { barbero: Barbero; servicios: Servicio[]; indice: number; onAge
 export function BarberoCard({ barbero, servicios, indice, onAgendar }: Props) {
   return (
     <div className="bc">
-      <Avatar nombre={barbero.full_name} foto={barbero.photo_url} indice={indice} className="av2" />
+      <Avatar nombre={barbero.full_name} foto={barbero.photo_url} indice={indice} className="av2" ampliable />
       <h3>{barbero.full_name}</h3>
       <div className="esp">{barbero.specialties || "Barbero profesional"}</div>
       <div className="tags">
