@@ -18,4 +18,4 @@ El administrador da de alta a los barberos con sus credenciales, especialidades 
 - [x] `POST /api/barbers/{id}/toggle` activa o desactiva; un id que no es barbero responde 404.
 - [x] Un barbero inactivo desaparece del público, no tiene franjas libres, no puede agendarse y no puede iniciar sesión.
 - [x] `/admin/barberos` muestra el formulario con los servicios activos marcados por defecto y la tabla con especialidades, servicios y estado.
-- [ ] Editar los datos y los servicios de un barbero existente.
+- [x] Editar nombre, correo, especialidades, servicios y contraseña de un barbero existente (`PUT /api/barbers/{id}`, botón «Editar»).

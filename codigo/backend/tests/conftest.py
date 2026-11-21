@@ -93,5 +93,6 @@ def catalogo(db):
     cliente = crear_usuario(db, "ana@correo.co", Rol.CLIENTE, "Ana Ruiz")
     admin = crear_usuario(db, "admin@correo.co", Rol.ADMIN, "Admin Barbería")
     manana = hoy() + timedelta(days=1)
-    generar_franjas(db, barbero.id, manana, manana + timedelta(days=2), time(9), time(11), 30)
+    # Agenda los 7 días: las pruebas no dependen de que «mañana» caiga en domingo.
+    generar_franjas(db, barbero.id, manana, manana + timedelta(days=2), time(9), time(11), 30, set(range(7)))
     return {"corte": corte, "barba": barba, "barbero": barbero, "cliente": cliente, "admin": admin}

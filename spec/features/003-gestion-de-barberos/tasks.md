@@ -12,4 +12,4 @@
 - [x] `/admin/barberos`: alta y tabla
 - [x] `BarberoCard` en `/barberia`
 - [x] Paso “Elige el barbero” filtrado por servicio en `/agendar`
-- [ ] Edición de barberos (backend y frontend)
+- [x] Edición de barberos (backend y frontend)
