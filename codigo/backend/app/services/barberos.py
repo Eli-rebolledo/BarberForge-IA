@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.seguridad import hash_password
 from app.core.tiempo import ahora_utc, hoy
-from app.models import Cita, Disponibilidad, MensajeChat, PreguntaPendiente, Rol, Servicio, Usuario
+from app.models import AusenciaBarbero, Cita, Disponibilidad, MensajeChat, PreguntaPendiente, Rol, Servicio, Usuario
 from app.models.cita import ESTADOS_ACTIVOS
 from app.schemas.barbero import BarberoEditarIn, BarberoIn
 from app.services import imagenes
@@ -125,6 +125,7 @@ def eliminar(db: Session, barbero_id: int) -> None:
     db.execute(update(Cita).where(Cita.created_by_id == barbero.id).values(created_by_id=None))
     for f in db.scalars(select(Disponibilidad).where(Disponibilidad.barber_id == barbero.id)):
         db.delete(f)
+    db.execute(delete(AusenciaBarbero).where(AusenciaBarbero.barber_id == barbero.id))
     barbero.servicios = []
     db.flush()
     db.delete(barbero)

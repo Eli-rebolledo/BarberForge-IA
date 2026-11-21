@@ -9,6 +9,8 @@ interface Props {
   onToggle: (iso: string) => void;
   /** Días con marca (punto) y, opcionalmente, un número. */
   marcas?: Record<string, number>;
+  /** Días sin atención (festivo o ausencia) con su motivo: se ven tachados. */
+  bloqueos?: Record<string, string>;
   /** Si se define, solo estos días se pueden elegir. */
   habilitados?: Set<string>;
   permitirPasado?: boolean;
@@ -19,7 +21,7 @@ interface Props {
 const CABECERA = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sá", "Do"];
 
 /** Calendario mensual. Sirve para elegir un día (cliente) o varios (administrador). */
-export function Calendario({ seleccion, onToggle, marcas = {}, habilitados, permitirPasado, onMes, mesInicial }: Props) {
+export function Calendario({ seleccion, onToggle, marcas = {}, bloqueos = {}, habilitados, permitirPasado, onMes, mesInicial }: Props) {
   const hoy = hoyISO();
   const base = (mesInicial ?? hoy).slice(0, 7).split("-").map(Number);
   const [vista, setVista] = useState({ y: base[0], m: base[1] - 1 });
@@ -49,8 +51,8 @@ export function Calendario({ seleccion, onToggle, marcas = {}, habilitados, perm
           const sel = seleccion.includes(iso);
           return (
             <button key={iso} type="button" disabled={bloqueado} onClick={() => onToggle(iso)}
-              className={`cal-c ${sel ? "sel" : ""} ${iso === hoy ? "hoy" : ""} ${marcas[iso] ? "mk" : ""}`}
-              aria-pressed={sel} aria-label={iso}>
+              className={`cal-c ${sel ? "sel" : ""} ${iso === hoy ? "hoy" : ""} ${marcas[iso] ? "mk" : ""} ${bloqueos[iso] ? "bq" : ""}`}
+              aria-pressed={sel} aria-label={bloqueos[iso] ? `${iso} · ${bloqueos[iso]}` : iso} title={bloqueos[iso]}>
               {i + 1}
             </button>
           );

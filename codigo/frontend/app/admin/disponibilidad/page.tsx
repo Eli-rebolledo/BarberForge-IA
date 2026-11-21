@@ -45,6 +45,7 @@ function Gestion() {
 
   const barbero = barberos?.find((b) => b.id === barberoId);
   const marcas = useMemo(() => Object.fromEntries(dias.filter((d) => d.total > 0).map((d) => [d.date, d.total])), [dias]);
+  const bloqueos = useMemo(() => Object.fromEntries(dias.filter((d) => d.bloqueo).map((d) => [d.date, d.bloqueo as string])), [dias]);
   const alternar = (iso: string) => setSel((s) => (s.includes(iso) ? s.filter((x) => x !== iso) : [...s, iso].sort()));
 
   function diasHabituales() {
@@ -89,8 +90,8 @@ function Gestion() {
             {barberos.map((b) => <option key={b.id} value={b.id}>{b.full_name}</option>)}
           </select>
         </label>
-        <Calendario seleccion={sel} marcas={marcas} onToggle={alternar} onMes={(m) => { setMes(m); }} />
-        <div className="leyenda"><span><i className="d mk" /> Con horario</span><span><i className="d sel" /> Seleccionado</span></div>
+        <Calendario seleccion={sel} marcas={marcas} bloqueos={bloqueos} onToggle={alternar} onMes={(m) => { setMes(m); }} />
+        <div className="leyenda"><span><i className="d mk" /> Con horario</span><span><i className="d sel" /> Seleccionado</span><span><i className="d bq" /> Sin atención</span></div>
         <div className="acts"><button className="ab" onClick={diasHabituales}>Seleccionar sus días habituales del mes</button><button className="ab" onClick={() => setSel([])}>Limpiar</button></div>
       </section>
 
@@ -108,7 +109,7 @@ function Gestion() {
           <button className="btn line" disabled={ocupado || !sel.length} onClick={() => aplicar("cerrar")}>Cerrar días</button>
           <button className="btn" disabled={ocupado || !sel.length} onClick={() => aplicar("abrir")}>Habilitar horario</button>
         </div>
-        <div className="info-auto"><Icono n="info" size={16} /> En «Barberos» defines los días habituales de la semana; aquí decides las fechas reales de cada mes.</div>
+        <div className="info-auto"><Icono n="info" size={16} /> En «Barberos» defines los días habituales de la semana; aquí decides las fechas reales de cada mes. Los festivos y las ausencias se marcan en la pestaña «Festivos» y nunca reciben horario.</div>
       </section>
     </div>
   );
