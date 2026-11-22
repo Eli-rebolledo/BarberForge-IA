@@ -23,5 +23,5 @@ Chat de la web que responde preguntas sobre la barbería con IA local (RAG sobre
 - [x] Sin Ollama, la búsqueda es por palabras clave y se devuelve el fragmento encontrado; sin resultados, se indica que no hay información.
 - [x] La base de conocimiento se indexa al arrancar (con reintentos cada 30 s mientras Ollama descarga los modelos), al cambiar el catálogo y con `POST /api/admin/reindex` (solo administrador).
 - [x] El chat muestra sugerencias iniciales, “Pensando” mientras responde, fuentes y botones; se reinicia al cambiar de usuario y no se pierde al cerrar el flotante.
-- [ ] Conjunto de preguntas de evaluación con respuestas esperadas y un umbral de aciertos.
-- [ ] Historial de conversación para preguntas de seguimiento.
+- [x] Conjunto de evaluación: Golden Dataset de 56 preguntas en 10 categorías, meta ≥ 70 %. Resultado: **82,1 %** de éxito con la configuración elegida (fidelidad 4,41/5). Ver `docs/evaluacion-rag/`.
+- [x] Historial de conversación para preguntas de seguimiento (iteración 2).

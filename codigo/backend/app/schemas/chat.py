@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -14,6 +15,8 @@ class ChatIn(BaseModel):
     message: str
     # Al tocar un horario ofrecido por el asistente se envía la reserva junto con el texto del botón.
     book: ReservaChat | None = None
+    # Por dónde llegó el mensaje: el servicio de voz manda «voz» (así una PQRS hablada queda con ese canal).
+    channel: Literal["chat", "voz"] = "chat"
 
 
 class OpcionChat(BaseModel):
