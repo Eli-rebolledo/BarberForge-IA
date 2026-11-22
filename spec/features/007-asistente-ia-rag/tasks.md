@@ -17,9 +17,10 @@
 - [x] Reserva desde el chat con manejo del 409
 - [x] Botón “Reindexar asistente”
 
-## Backlog
-- [ ] Set de evaluación (preguntas y respuestas esperadas)
-- [ ] Historial de conversación
+## Evaluación (2026-11-19)
+- [x] Golden Dataset (56 preguntas) y resultados de configA, configB y sin RAG en `docs/evaluacion-rag/`
+- [x] `codigo/backend/evaluacion/evaluar_asistente.py`: el mismo dataset contra `POST /api/chat`
+- [x] Historial de conversación (iteración 2)
 
 ## Iteración 2 (2026-11-13): asistente por rol, historial y aprendizaje
 - [x] Historial por usuario en `chat_messages`; `GET/DELETE /api/chat/history`; la pregunta se guarda antes de responder (`pending` mientras piensa).
