@@ -35,7 +35,9 @@ DOCUMENTOS_INICIALES = [
      "Si llegas al local y está ocupado, el barbero o el administrador pueden crear la cita por ti sin que "
      "tengas que registrarte. Los recordatorios por correo son automáticos."),
     ("Pagos y datos", NIVEL_PUBLICO,
-     "No pedimos cédula para agendar: solo nombre y correo. Tus datos se tratan según la Ley 1581 de 2012."),
+     "La plataforma no maneja pagos: agendar no cuesta nada y no se pide tarjeta, efectivo ni ningún medio de pago; "
+     "el servicio se paga directamente en el local. No pedimos cédula para agendar: solo nombre y correo. "
+     "Tus datos se tratan según la Ley 1581 de 2012."),
     ("Guía de estilos", NIVEL_PUBLICO,
      "Fade bajo para rostro ovalado; barba perfilada con navaja para rostro redondo. "
      "Usa producto mate y repite el corte cada dos semanas."),
@@ -147,6 +149,24 @@ def _fragmentos_de(doc: DocumentoConocimiento, emb: _Embeddings) -> list[Fragmen
             for parte in trocear(doc.content)]
 
 
+MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
+         "noviembre", "diciembre"]
+DIAS_SEMANA = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+
+
+def _texto_dias_sin_atencion(db: Session, nombre: str) -> str:
+    """Festivos y cierres próximos (hasta 20) en un texto que el RAG puede recuperar."""
+    from app.core.tiempo import hoy
+    from app.models import DiaCerrado
+    dias = list(db.scalars(select(DiaCerrado).where(DiaCerrado.day >= hoy()).order_by(DiaCerrado.day).limit(20)))
+    if not dias:
+        return ""
+    lista = "; ".join(f"{DIAS_SEMANA[d.day.weekday()]} {d.day.day} de {MESES[d.day.month - 1]} de {d.day.year} ({d.motivo})"
+                      for d in dias)
+    return (f"Días sin atención, festivos y cierres de {nombre}: la barbería está cerrada y no atiende {lista}. "
+            "Esos días no abren, no atienden ni trabajan, y no se pueden agendar citas; elige otra fecha.")
+
+
 def reindexar(db: Session) -> bool:
     """Reconstruye todo el índice. Devuelve False si algún embedding no se pudo calcular (se reintenta luego);
     sin embeddings la búsqueda por palabras clave sigue funcionando."""
@@ -156,6 +176,10 @@ def reindexar(db: Session) -> bool:
     datos = f"{m.nombre}. Dirección: {m.direccion}. Horario: {m.horario}. {m.descripcion}"
     fragmentos = [FragmentoConocimiento(kind=TIPO_SERVICIO, source="Datos de la barbería", content=datos,
                                         access_level=NIVEL_PUBLICO, embedding=emb(datos))]
+    cierres = _texto_dias_sin_atencion(db, m.nombre)  # RF09: el asistente informa qué días no se atiende
+    if cierres:
+        fragmentos.append(FragmentoConocimiento(kind=TIPO_SERVICIO, source="Días sin atención", content=cierres,
+                                                access_level=NIVEL_PUBLICO, embedding=emb(cierres)))
     fragmentos += [FragmentoConocimiento(kind=TIPO_SERVICIO, source="Catálogo de servicios", content=_texto_servicio(s),
                                          access_level=NIVEL_PUBLICO, embedding=emb(_texto_servicio(s)))
                    for s in db.scalars(select(Servicio).where(Servicio.is_active).order_by(Servicio.id))]
