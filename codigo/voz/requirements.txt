@@ -1,0 +1,10 @@
+fastapi==0.115.12
+uvicorn==0.30.6
+python-multipart==0.0.20
+httpx==0.27.2
+# Audio a texto: Whisper con CTranslate2 (corre en CPU, amd64 y arm64). Lee webm/ogg/wav/mp3 con PyAV.
+faster-whisper==1.2.1
+# PyAV 17 o superior ya no acepta un argumento que usa faster-whisper 1.2.1
+av==16.1.0
+# Texto a voz local (opcional): si no hay voz instalada, el navegador lee la respuesta.
+piper-tts==1.8.0
