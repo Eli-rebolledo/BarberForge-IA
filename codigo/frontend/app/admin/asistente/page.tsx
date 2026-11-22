@@ -61,7 +61,7 @@ function PorAprender({ onCambio }: { onCambio: () => void }) {
   return (
     <>
       <div className="toolrow">
-        <p className="mute">Preguntas que el asistente no supo responder o cuya respuesta no le sirvió a alguien. Escribe la respuesta una vez: queda como respuesta oficial y llama3 la usa para responder con sus propias palabras.</p>
+        <p className="mute">Preguntas que el asistente no supo responder o cuya respuesta no le sirvió a alguien. Escribe la respuesta una vez: queda como respuesta oficial y el modelo de lenguaje la usa para responder con sus propias palabras.</p>
         <div className="seg">
           {(["pendiente", "respondida", "descartada"] as Estado[]).map((e) => (
             <button key={e} type="button" className={estado === e ? "on" : ""} onClick={() => setEstado(e)}>
@@ -272,7 +272,7 @@ function AsistenteIA() {
           <aside className="cd asis-ayuda">
             <h3>Cómo aprende</h3>
             <div className="ayuda-i"><span className="ic"><Icono n="alerta" size={18} /></span><p>Si no sabe algo, o alguien marca que la respuesta no le sirvió, la pregunta llega a «Por aprender».</p></div>
-            <div className="ayuda-i"><span className="ic"><Icono n="chispa" size={18} /></span><p>Escribes la respuesta una vez: queda guardada como respuesta oficial y llama3 la redacta cuando alguien vuelve a preguntar (si la IA no responde, se usa el texto guardado).</p></div>
+            <div className="ayuda-i"><span className="ic"><Icono n="chispa" size={18} /></span><p>Escribes la respuesta una vez: queda guardada como respuesta oficial y el modelo de lenguaje la redacta cuando alguien vuelve a preguntar (si la IA no responde, se usa el texto guardado).</p></div>
             <div className="ayuda-i"><span className="ic"><Icono n="libro" size={18} /></span><p>Agendar, cancelar y consultar citas se hacen directo en la base de datos, para que la IA nunca invente horarios.</p></div>
           </aside>
         </div>
