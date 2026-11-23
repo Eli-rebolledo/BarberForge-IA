@@ -1,4 +1,4 @@
-# Plantilla: la imagen de nginx reemplaza ${API_UPSTREAM} y ${DNS_RESOLVER} al arrancar.
+# Plantilla: la imagen de nginx reemplaza ${API_UPSTREAM}, ${VOZ_UPSTREAM} y ${DNS_RESOLVER} al arrancar.
 #   Docker Compose: API_UPSTREAM=http://bf-api:8000   DNS_RESOLVER=127.0.0.11 (DNS interno de Docker)
 #   Kubernetes:     API_UPSTREAM=http://<release>-api:8000   DNS_RESOLVER=kube-dns.kube-system.svc.cluster.local
 server {
@@ -13,6 +13,16 @@ server {
     set $api_upstream ${API_UPSTREAM};
     proxy_pass $api_upstream;
     proxy_read_timeout 180s;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+  }
+
+  # Feature 012: asistente de voz (contenedor bf-voz). Si no está levantado, nginx responde 502 y la web lo avisa.
+  location /voz/ {
+    set $voz_upstream ${VOZ_UPSTREAM};
+    proxy_pass $voz_upstream;
+    client_max_body_size 4m;
+    proxy_read_timeout 300s;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $remote_addr;
   }
