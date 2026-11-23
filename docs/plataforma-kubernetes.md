@@ -21,7 +21,7 @@ guía de Minikube del diplomado; los comandos de Linux van al lado.
 │ observabilidad   Grafana + Prometheus + Tempo + Loki (otel-lgtm)          │
 └───────────────────────────────┬──────────────────────────────────────────┘
                                 │ http://host.minikube.internal:11434
-                 Docker Desktop: barberforge-ollama (llama3 + nomic-embed-text, creado por OpenTofu)
+                 Docker Desktop: barberforge-ollama (llama3.2:3b + nomic-embed-text, creado por OpenTofu)
 ```
 
 | Qué | Dónde | Lo crea |
@@ -32,7 +32,7 @@ guía de Minikube del diplomado; los comandos de Linux van al lado.
 | Observabilidad (Helm) | `plataforma/helm/observabilidad` | Argo CD |
 
 ## Requisitos
-- Windows 10/11 de 64 bits, **16 GB de RAM** (Minikube usa 6 GB y Ollama ~5 GB), virtualización habilitada.
+- Windows 10/11 de 64 bits, **16 GB de RAM** (Minikube usa 6 GB y Ollama ~3 GB con llama3.2:3b), virtualización habilitada.
 - **Docker Desktop** abierto ("Engine running").
 - `winget` (App Installer de Microsoft Store).
 
