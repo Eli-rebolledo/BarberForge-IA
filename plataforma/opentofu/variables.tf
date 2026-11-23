@@ -146,9 +146,9 @@ variable "ollama_imagen" {
 }
 
 variable "modelo_llm" {
-  description = "Modelo de lenguaje. En equipos modestos: llama3.2:3b (más rápido)."
+  description = "Modelo de lenguaje. llama3.2:3b es el evaluado y el más rápido en CPU; «llama3» (8B) si sobra RAM."
   type        = string
-  default     = "llama3"
+  default     = "llama3.2:3b"
 }
 
 variable "modelo_embeddings" {
