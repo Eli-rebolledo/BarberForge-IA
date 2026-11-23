@@ -18,10 +18,12 @@ from app.routers import (
     barberias,
     barberos,
     chat,
+    cierres,
     citas,
     cuenta,
     disponibilidad,
     health,
+    pqrs,
     servicios,
 )
 from app.services import arranque
@@ -46,7 +48,7 @@ async def ciclo_de_vida(_: FastAPI):
         t.cancel()
 
 
-VERSION = "1.1.0"
+VERSION = "1.3.0"
 app = FastAPI(title="BarberForge AI", version=VERSION, lifespan=ciclo_de_vida)
 telemetria.configurar(app, bd.engine, VERSION)
 
@@ -67,6 +69,6 @@ async def base_no_disponible(_: Request, exc: OperationalError) -> JSONResponse:
                         content={"detail": "La base de datos no está disponible. Intenta de nuevo en unos segundos."})
 
 
-for modulo in (health, admin, auth, cuenta, barberias, servicios, barberos, disponibilidad, citas, chat,
-               asistente):
+for modulo in (health, admin, auth, cuenta, barberias, servicios, barberos, disponibilidad, cierres, citas, chat,
+               asistente, pqrs):
     app.include_router(modulo.router)

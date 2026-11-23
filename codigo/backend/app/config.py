@@ -29,7 +29,7 @@ class Settings(BaseSettings):
 
     # IA local
     ollama_url: str = "http://bf-ollama:11434"
-    llm_model: str = "llama3"
+    llm_model: str = "llama3.2:3b"  # el modelo con el que se evaluó el RAG; «llama3» (8B) si hay RAM de sobra
     embed_model: str = "nomic-embed-text"
 
     # Correo y enlaces

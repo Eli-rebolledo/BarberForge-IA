@@ -10,6 +10,10 @@ services:
   bf-ollama:
     ports:
       - "11434:11434"
+  # Feature 012: para probar el servicio de voz directo (http://localhost:8001/docs) y con el script de evaluación.
+  bf-voz:
+    ports:
+      - "8001:8001"
   otel-lgtm:
     ports:
       - "3000:3000"   # Grafana (admin / admin)
