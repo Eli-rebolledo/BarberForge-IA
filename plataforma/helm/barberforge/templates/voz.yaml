@@ -1,0 +1,90 @@
+{{- if .Values.voz.enabled }}
+# Feature 012 · asistente de voz: Whisper (audio a texto) + intención con Ollama + API + Piper (voz).
+# La web reenvía /voz/ a este Service. Usa la API existente: no toca la base de datos.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "bf.nombre" . }}-voz
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+    app.kubernetes.io/component: voz
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "bf.selector" (dict "ctx" . "componente" "voz") | nindent 4 }}
+  ports:
+    - name: http
+      port: 8001
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bf.nombre" . }}-voz
+  labels:
+    {{- include "bf.etiquetas" . | nindent 4 }}
+    app.kubernetes.io/component: voz
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      {{- include "bf.selector" (dict "ctx" . "componente" "voz") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "bf.etiquetas" . | nindent 8 }}
+        app.kubernetes.io/component: voz
+    spec:
+      serviceAccountName: {{ include "bf.nombre" . }}
+      automountServiceAccountToken: false
+      {{- include "bf.pullSecrets" . | nindent 6 }}
+      securityContext:
+        {{- include "bf.seguridadPod" . | nindent 8 }}
+        runAsUser: 10001
+        runAsGroup: 10001
+      containers:
+        - name: voz
+          image: {{ include "bf.imagenVoz" . }}
+          imagePullPolicy: {{ .Values.imagenes.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8001
+          env:
+            - name: API_URL
+              value: {{ printf "http://%s-api.%s.svc.cluster.local:8000" (include "bf.nombre" .) .Release.Namespace | quote }}
+            - name: OLLAMA_URL
+              value: {{ if eq .Values.ollama.modo "interno" }}{{ printf "http://%s-ollama:11434" (include "bf.nombre" .) | quote }}{{ else }}{{ .Values.ollama.urlExterna | quote }}{{ end }}
+            - name: LLM_MODEL
+              value: {{ .Values.ollama.modelo | quote }}
+            - name: WHISPER_MODEL
+              value: {{ .Values.voz.whisperModelo | quote }}
+            - name: TTS_ACTIVO
+              value: {{ .Values.voz.tts | quote }}
+            - name: HOME
+              value: /tmp
+            - name: HF_HOME
+              value: /tmp/hf
+          startupProbe:
+            httpGet: {path: /voz/health, port: http}
+            periodSeconds: 10
+            failureThreshold: 30
+          readinessProbe:
+            httpGet: {path: /voz/health, port: http}
+            periodSeconds: 15
+          livenessProbe:
+            httpGet: {path: /voz/health, port: http}
+            periodSeconds: 30
+          resources:
+            {{- toYaml .Values.voz.recursos | nindent 12 }}
+          securityContext:
+            {{- include "bf.seguridadContenedor" . | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{- end }}

@@ -57,6 +57,8 @@ spec:
           env:
             - name: API_UPSTREAM
               value: {{ printf "http://%s-api.%s.svc.cluster.local:8000" (include "bf.nombre" .) .Release.Namespace | quote }}
+            - name: VOZ_UPSTREAM
+              value: {{ printf "http://%s-voz.%s.svc.cluster.local:8001" (include "bf.nombre" .) .Release.Namespace | quote }}
             - name: DNS_RESOLVER
               value: {{ .Values.web.dnsResolver | quote }}
           readinessProbe:
