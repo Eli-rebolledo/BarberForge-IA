@@ -152,7 +152,10 @@ export interface CitaIn {
   guest_email?: string;
 }
 
-export interface DiaCalendario { date: string; total: number; ocupadas: number }
+export interface DiaCalendario { date: string; total: number; ocupadas: number; bloqueo?: string | null }
+export interface Festivo { id: number; date: string; motivo: string }
+export interface CitaAfectada { id: number; date: string; time: string; client: string; barber: string; service: string }
+export interface Ausencia { id: number; barber_id: number; barber: string; date_from: string; date_to: string; motivo: string }
 export interface ClienteBasico { id: number; full_name: string }
 export interface Estadisticas {
   ingresos_mes: number; ingresos_mes_anterior: number; ingresos_hoy: number; por_cobrar: number;
@@ -223,6 +226,25 @@ export interface MensajeGuardado {
 }
 
 export interface HistorialChat { messages: MensajeGuardado[]; pending: boolean }
+
+/** Feature 012: respuesta del asistente de voz (servicio bf-voz, detrás de /voz/). */
+export interface RespuestaVoz {
+  transcripcion: string;
+  intencion: { intencion: "pregunta" | "agendar" | "cancelar" | "mis_citas" | "pqrs" | "saludo"; tipo_pqrs?: string };
+  metodo_intencion: "llm" | "reglas";
+  mensaje?: string | null; // frase que se le envió al chat
+  respuesta: RespuestaChat;
+  audio?: string | null; // WAV en base64 (Piper); si no llega, el navegador lee la respuesta
+  tiempos_ms: Record<string, number>;
+}
+
+/** Feature 012: PQRS que llegan por el asistente de voz (vista del administrador). */
+export type EstadoPqrs = "abierta" | "en_tramite" | "cerrada";
+export interface Pqrs {
+  id: number; radicado: string; tipo: "peticion" | "queja" | "reclamo" | "sugerencia";
+  descripcion: string; resumen: string | null; canal: string; estado: EstadoPqrs; quien: string;
+  correo: string | null; respuesta: string | null; respondida_at: string | null; created_at: string | null;
+}
 
 export type Visibilidad = "public" | "internal";
 
@@ -306,6 +328,30 @@ async function pedir<T>(ruta: string, metodo: Metodo = "GET", cuerpo?: unknown):
   return datos as T;
 }
 
+/** Envía una nota de voz al servicio de voz. Va aparte de pedir() porque es multipart y no JSON. */
+async function enviarVoz(audio: Blob, conVoz: boolean): Promise<RespuestaVoz> {
+  const token = leerToken();
+  const datos = new FormData();
+  const extension = audio.type.includes("ogg") ? "ogg" : audio.type.includes("mp4") ? "m4a" : "webm";
+  datos.append("audio", audio, `nota.${extension}`);
+  datos.append("responder_con_voz", String(conVoz));
+  let r: Response;
+  try {
+    r = await fetch("/voz/", { method: "POST", body: datos, headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  } catch {
+    throw new ApiError("No se pudo conectar con el asistente de voz.", 0);
+  }
+  let cuerpo: { detail?: unknown } = {};
+  try { cuerpo = await r.json(); } catch { /* sin JSON */ }
+  if (!r.ok) {
+    const detalle = typeof cuerpo.detail === "string" ? cuerpo.detail : undefined;
+    throw new ApiError(detalle ?? (r.status === 502 || r.status === 503 || r.status === 504
+      ? "El asistente de voz no está disponible en este momento. Escribe tu pregunta."
+      : `Error ${r.status}`), r.status);
+  }
+  return cuerpo as RespuestaVoz;
+}
+
 type Ok = { ok: boolean };
 
 export const api = {
@@ -350,6 +396,21 @@ export const api = {
   cerrarDias: (barber_id: number, dates: string[]) => pedir<Ok>("/availability/close", "POST", { barber_id, dates }),
   generarDisponibilidad: (datos: GenerarDisponibilidadIn) => pedir<Ok>("/availability", "POST", datos),
 
+  // festivos (RF09) y ausencias de barberos (RF17)
+  festivos: () => pedir<Festivo[]>("/closed-days"),
+  crearFestivo: (date: string, motivo: string, date_to?: string) =>
+    pedir<{ id: number; dias: number; canceladas: number }>("/closed-days", "POST", { date, date_to: date_to || null, motivo }),
+  cargarFestivosColombia: (year: number) => pedir<{ creados: number; canceladas: number }>("/closed-days/colombia", "POST", { year }),
+  borrarFestivo: (id: number) => pedir<Ok>(`/closed-days/${id}`, "DELETE"),
+  afectadasPorFestivo: (date: string, date_to?: string) =>
+    pedir<CitaAfectada[]>(`/closed-days/preview?date=${date}${date_to ? `&date_to=${date_to}` : ""}`),
+  afectadasPorAusencia: (barberoId: number, date_from: string, date_to: string) =>
+    pedir<CitaAfectada[]>(`/barbers/${barberoId}/absences/preview?date_from=${date_from}&date_to=${date_to}`),
+  ausencias: () => pedir<Ausencia[]>("/absences"),
+  crearAusencia: (barberoId: number, date_from: string, date_to: string, motivo: string) =>
+    pedir<{ id: number; reasignadas: number; canceladas: number }>(`/barbers/${barberoId}/absences`, "POST", { date_from, date_to, motivo }),
+  borrarAusencia: (id: number) => pedir<Ok>(`/absences/${id}`, "DELETE"),
+
   // citas
   citas: () => pedir<Cita[]>("/appointments"),
   agendar: (datos: CitaIn) => pedir<{ id: number }>("/appointments", "POST", datos),
@@ -373,6 +434,10 @@ export const api = {
   opinarChat: (datos: { useful: boolean; message_id?: number; question?: string; answer?: string }) =>
     pedir<{ ok: boolean; message: string }>("/chat/feedback", "POST", datos),
   reindexar: () => pedir<{ embeddings_ok: boolean }>("/admin/reindex", "POST"),
+  voz: (audio: Blob, conVoz = true) => enviarVoz(audio, conVoz),
+  pqrs: () => pedir<Pqrs[]>("/admin/pqrs"),
+  gestionarPqrs: (id: number, estado: EstadoPqrs, respuesta?: string) =>
+    pedir<Ok>(`/admin/pqrs/${id}`, "PATCH", { estado, respuesta: respuesta || null }),
 
   // aprendizaje del asistente (administrador)
   preguntasPendientes: (estado = "pendiente") => pedir<PreguntaPendiente[]>(`/assistant/questions?status=${estado}`),

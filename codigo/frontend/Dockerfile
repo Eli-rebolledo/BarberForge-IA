@@ -16,8 +16,9 @@ FROM nginxinc/nginx-unprivileged:1.30-alpine
 USER root
 RUN apk upgrade --no-cache
 ENV API_UPSTREAM=http://bf-api:8000 \
+    VOZ_UPSTREAM=http://bf-voz:8001 \
     DNS_RESOLVER=127.0.0.11 \
-    NGINX_ENVSUBST_FILTER="^(API_UPSTREAM|DNS_RESOLVER)$"
+    NGINX_ENVSUBST_FILTER="^(API_UPSTREAM|VOZ_UPSTREAM|DNS_RESOLVER)$"
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/out /usr/share/nginx/html
 EXPOSE 8080

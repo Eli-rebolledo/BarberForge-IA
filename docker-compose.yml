@@ -25,7 +25,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       OLLAMA_URL: http://bf-ollama:11434
-      LLM_MODEL: ${LLM_MODEL:-llama3}
+      LLM_MODEL: ${LLM_MODEL:-llama3.2:3b}
       SMTP_HOST: ${SMTP_HOST:-mailhog}
       SMTP_PORT: ${SMTP_PORT:-1025}
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8080}
@@ -73,9 +73,29 @@ services:
       - bf-ollama
     environment:
       OLLAMA_HOST: http://bf-ollama:11434
-      LLM_MODEL: ${LLM_MODEL:-llama3}
+      LLM_MODEL: ${LLM_MODEL:-llama3.2:3b}
     entrypoint: ["/bin/sh", "-c", "ollama pull nomic-embed-text && ollama pull $$LLM_MODEL"]
     restart: "no"
+
+  # Feature 012 · asistente de voz (Whisper + intención con Ollama + API + Piper). Es opcional y pesado (~1,5 GB de
+  # imagen, ~1 GB de RAM), por eso va en un perfil: docker compose --profile voz up -d --build
+  # La web reenvía /voz/ a este contenedor; si no está levantado, el botón del micrófono avisa que no está disponible.
+  bf-voz:
+    build:
+      context: ./codigo/voz
+      args:
+        WHISPER_MODEL: ${WHISPER_MODEL:-base}
+        PIPER_VOZ: ${PIPER_VOZ:-es_MX-claude-high}
+    profiles: ["voz"]
+    environment:
+      API_URL: http://bf-api:8000
+      OLLAMA_URL: http://bf-ollama:11434
+      LLM_MODEL: ${LLM_MODEL:-llama3.2:3b}
+      INTENCION_CON_LLM: ${INTENCION_CON_LLM:-true}
+      TTS_ACTIVO: ${TTS_ACTIVO:-true}
+    depends_on:
+      - bf-api
+    restart: unless-stopped
 
   mailhog:
     image: mailhog/mailhog:latest
@@ -86,8 +106,19 @@ services:
   otel-lgtm:
     image: grafana/otel-lgtm:0.8.1
     profiles: ["observabilidad"]
+    environment:
+      # Las alertas de Grafana (plataforma/helm/observabilidad/grafana/alertas.yaml) llegan por correo a MailHog.
+      GF_SMTP_ENABLED: "true"
+      GF_SMTP_HOST: mailhog:1025
+      GF_SMTP_FROM_ADDRESS: grafana@barberforge.local
     volumes:
       - lgtm:/data
+      # Mismo tablero y mismas alertas que en Kubernetes, cargados solos al arrancar.
+      - ./plataforma/helm/observabilidad/grafana/tableros.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/barberforge.yaml:ro
+      - ./plataforma/helm/observabilidad/dashboards/barberforge-slo.json:/var/lib/barberforge-dashboards/barberforge-slo.json:ro
+      - ./plataforma/helm/observabilidad/grafana/alertas.yaml:/otel-lgtm/grafana/conf/provisioning/alerting/barberforge.yaml:ro
+    depends_on:
+      - mailhog
     restart: unless-stopped
 
 volumes:
