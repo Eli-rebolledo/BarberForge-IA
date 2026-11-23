@@ -1,5 +1,5 @@
 {{- if eq .Values.ollama.modo "interno" }}
-# IA local dentro del clúster (opcional). Necesita ~8 GB de RAM para llama3: en equipos de 16 GB es mejor
+# IA local dentro del clúster (opcional). Con llama3.2:3b necesita ~4 GB de RAM; aun así, en equipos de 16 GB es mejor
 # dejar Ollama en Docker Desktop (ollama.modo: externo).
 apiVersion: v1
 kind: PersistentVolumeClaim
