@@ -18,4 +18,4 @@ Cada cita pendiente recibe un correo 40 minutos antes con un enlace de confirmac
 - [x] `POST /api/appointments/{id}/remind` (solo administrador) envía el recordatorio a una cita `pendiente`; en otro estado responde 400.
 - [x] Si el SMTP falla, se registra una advertencia y la API sigue funcionando.
 - [x] En `/citas` el administrador ve “Enviar recordatorio” en las citas pendientes y el enlace “Abrir buzón de correos” (`MAILHOG_URL`).
-- [ ] Correo de aviso al agendar y al cancelar.
+- [x] Correo de aviso al agendar (formulario, chat y voz) y al cancelar (lo cancele el cliente, el barbero o el administrador).

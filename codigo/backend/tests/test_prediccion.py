@@ -66,7 +66,7 @@ def test_caracteristicas_invitado_sin_historial_y_tasa_suavizada():
 
 def test_entrenamiento_elige_un_modelo_util_y_se_puede_guardar(tmp_path):
     paquete, resultados = entrenamiento.entrenar(generador.generar(), "sintetico")
-    assert set(resultados) == {"regresion_logistica", "arbol_decision"}
+    assert set(resultados) == {"regresion_logistica", "arbol_decision", "random_forest"}
     assert paquete["metricas"]["auc"] > 0.65
     assert paquete["caracteristicas"] == list(car.NOMBRES)
     ruta = entrenamiento.guardar(paquete, tmp_path / "m.joblib")
@@ -202,9 +202,14 @@ def _historial_real(db, catalogo, n=240):
               creada=(cuando - timedelta(hours=azar.choice([2, 30, 200]))).replace(tzinfo=None) - timedelta(hours=5))
 
 
-def test_reentrenar_con_citas_reales_guarda_un_modelo_firmado(db, catalogo):
+def test_reentrenar_con_citas_reales_guarda_un_modelo_firmado(db, catalogo, monkeypatch):
+    enviados = []
+    monkeypatch.setattr("app.services.correo.enviar", lambda *a: enviados.append(a) or True)
     _historial_real(db, catalogo)
     resultado = prediccion.reentrenar(db, minimo=100, registrar_mlflow=False)
+    # El administrador recibe un correo con lo que pasó (activado o conservado) y los dos AUC.
+    assert [e[0] for e in enviados] == ["admin@correo.co"]
+    assert ("activado" in enviados[0][1]) == resultado["activado"] and "AUC nuevo" in enviados[0][2]
     assert resultado["entrenado"] is True, resultado
     fila = db.query(ModeloML).one()
     assert fila.origin == "real" and fila.signature == prediccion.firmar(fila.content)

@@ -4,3 +4,4 @@
 #   mlflow ui --backend-store-uri sqlite:///mlflow.db      → http://localhost:5000
 -r requirements.txt
 mlflow==3.18.0
+xgboost==3.4.1   # solo para el experimento app/ml/comparar_modelos.py (no va en la imagen)

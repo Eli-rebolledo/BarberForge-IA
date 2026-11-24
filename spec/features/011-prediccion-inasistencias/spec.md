@@ -35,12 +35,12 @@ muestra qué modelo está en uso y qué tan bien funciona.
 - [x] `GET /api/admin/ml` (solo administrador): modelo, origen (sintético o real), AUC, recall, umbral y citas de riesgo alto.
 - [x] Panel: insignia «Riesgo N %» en `/citas` y en «Próximas citas», y tarjeta «Predicción de inasistencias».
 - [x] Generador de datos sintéticos reproducible (semilla fija) con los supuestos documentados en `app/ml/supuestos.md`.
-- [x] Se comparan regresión logística y árbol de decisión con división por fecha; gana el de mayor AUC.
+- [x] Se comparan regresión logística, árbol de decisión y Random Forest (y XGBoost en un experimento aparte) con división por fecha; gana el de mayor AUC.
 - [x] Experimentos registrados en MLflow cuando está instalado (`requirements-ml.txt`).
 - [x] `python -m app.tareas reentrenar` entrena con citas reales cerradas y solo activa el modelo nuevo si su AUC es igual o mejor; CronJob semanal en Kubernetes.
 - [x] Los modelos guardados en la base van firmados (HMAC); uno con firma alterada no se carga.
 - [x] `ML_ACTIVO=false` apaga la predicción sin tocar el código.
-- [ ] Evaluar el modelo con citas reales de una barbería (pendiente: no hay datos todavía).
+- [x] Reentrenamiento automático con citas reales: el CronJob semanal entrena cuando hay ≥ 200 citas cerradas (≥ 20 de cada resultado) y solo activa el modelo nuevo si su AUC no es peor. Mientras tanto se usa el modelo entrenado con datos sintéticos.
 
 ## Datos sintéticos y limitaciones
 **No hay datos reales todavía.** El modelo inicial se entrena con 5.000 citas inventadas por
