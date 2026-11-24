@@ -16,6 +16,9 @@ predicciones = _medidor.create_counter(
     "barberforge.ml.predicciones", description="Citas evaluadas por el modelo de inasistencias (nivel: alto, bajo)")
 chat_respuestas = _medidor.create_counter(
     "barberforge.chat.respuestas", description="Respuestas del asistente por tipo (llm, aprendida, accion, sin_respuesta)")
+duracion_asistente = _medidor.create_histogram(
+    "barberforge.asistente.duracion", unit="s",
+    description="Tiempo total de una respuesta del asistente, de la pregunta a la respuesta (canal: chat, voz)")
 duracion_llm = _medidor.create_histogram(
     "barberforge.llm.duracion", unit="s", description="Tiempo que tarda el modelo de lenguaje en responder")
 

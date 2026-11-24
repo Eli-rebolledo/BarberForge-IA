@@ -6,3 +6,8 @@ persistencia:
 recursos:
   requests: {cpu: 250m, memory: 768Mi}
   limits: {cpu: "1", memory: 1536Mi}
+# Alertas de Grafana (grafana/alertas.yaml). Sin host SMTP se ven en Grafana › Alerting; con host también llegan por correo.
+alertas:
+  smtp:
+    host: ""                 # p. ej. barberforge-mailhog.barberforge-dev.svc.cluster.local:1025
+    remitente: grafana@barberforge.local
