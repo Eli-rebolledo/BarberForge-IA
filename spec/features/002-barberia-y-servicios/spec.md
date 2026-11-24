@@ -19,4 +19,4 @@ Ficha pública de la barbería (nombre, dirección, horario, descripción), su c
 - [x] Crear, editar o alternar un servicio dispara el reindexado del asistente en segundo plano.
 - [x] `/barberia` muestra filtros por tipo, tarjetas de servicios y de barberos; “Agendar” lleva a `/agendar` con el servicio o barbero preseleccionado, o a `/login?next=…` si no hay sesión; un barbero o administrador ve un aviso.
 - [x] `/admin/servicios` lista todos los servicios con tipo, precio, duración y estado, y permite editar en el mismo formulario.
-- [ ] El inicio tiene la sección `#barberias` a la que apunta el enlace “Barberías” del `Navbar`.
+- [x] Todos los enlaces del `Navbar` llevan a una página o sección que existe (`/`, `/barberia`, `/#proceso`, asistente).
