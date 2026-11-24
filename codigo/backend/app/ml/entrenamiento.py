@@ -1,4 +1,5 @@
-"""Entrena y compara dos modelos de inasistencia: regresión logística y árbol de decisión.
+"""Entrena y compara tres modelos de inasistencia: regresión logística, árbol de decisión y Random Forest.
+(XGBoost se probó aparte, en app/ml/comparar_modelos.py, sin meterlo en la imagen de la API.)
 
 - División POR FECHA: entrena con el 80 % más antiguo y evalúa con el 20 % más reciente. Así se simula lo que
   pasa en la vida real (el modelo predice citas futuras), y es más honesto que mezclar al azar.
@@ -17,6 +18,7 @@ import joblib
 import numpy as np
 import sklearn
 from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import brier_score_loss, confusion_matrix, precision_score, recall_score, roc_auc_score
 from sklearn.pipeline import Pipeline, make_pipeline
@@ -49,6 +51,10 @@ def candidatos(semilla: int = 2026) -> dict[str, Pipeline]:
                                          ("modelo", LogisticRegression(max_iter=2000, C=1.0))]),
         "arbol_decision": Pipeline([("modelo", DecisionTreeClassifier(max_depth=5, min_samples_leaf=40,
                                                                       random_state=semilla))]),
+        # Muchos árboles con datos y variables al azar: menos sobreajuste que un solo árbol.
+        "random_forest": Pipeline([("modelo", RandomForestClassifier(n_estimators=200, max_depth=6,
+                                                                     min_samples_leaf=20, n_jobs=1,
+                                                                     random_state=semilla))]),
     }
 
 
@@ -69,7 +75,7 @@ def evaluar(modelo, x: np.ndarray, y: np.ndarray, umbral: float = UMBRAL) -> dic
     pred = (p >= umbral).astype(int)
     vn, fp, fn, vp = confusion_matrix(y, pred, labels=[0, 1]).ravel()
     return {
-        "auc": round(float(roc_auc_score(y, p)), 4) if len(set(y)) > 1 else None,
+        "auc": round(float(roc_auc_score(y, p)), 3) if len(set(y)) > 1 else None,
         "recall": round(float(recall_score(y, pred, zero_division=0)), 4),
         "precision": round(float(precision_score(y, pred, zero_division=0)), 4),
         "brier": round(float(brier_score_loss(y, p)), 4),
@@ -82,7 +88,7 @@ def evaluar(modelo, x: np.ndarray, y: np.ndarray, umbral: float = UMBRAL) -> dic
 
 
 def importancia(nombre: str, modelo: Pipeline) -> dict[str, float]:
-    """Coeficientes (logística) o importancia (árbol), para explicar el modelo en la sustentación."""
+    """Coeficientes (logística) o importancia (árbol y Random Forest), para explicar el modelo en la sustentación."""
     final = modelo.named_steps["modelo"]
     if nombre == "regresion_logistica":
         nombres = ([f"dia_semana={d}" for d in range(7)] + [f"franja={f}" for f in range(4)]

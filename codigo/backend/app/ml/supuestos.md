@@ -49,7 +49,15 @@ División por fecha: entrena con las 4.000 citas más antiguas y evalúa con las
 | Modelo | AUC | Recall (umbral 0,20) | Precisión | Citas con aviso extra |
 |---|---|---|---|---|
 | **Regresión logística (ganador)** | **0,71** | **0,59** | 0,32 | 35 % |
+| XGBoost (solo experimento, profundidad 2) | 0,71 (0,707) | 0,48 | 0,34 | 27 % |
+| Random Forest (200 árboles, profundidad 6) | 0,68 | 0,49 | 0,32 | 29 % |
 | Árbol de decisión (profundidad 5) | 0,58 | 0,39 | 0,27 | 27 % |
+
+**Por qué gana la regresión logística.** Con los mismos datos y la misma división, los modelos de bosques y boosting
+no la superan: los datos sintéticos se generaron con una relación lineal (en escala logit) entre las variables y la
+inasistencia, y eso es justo lo que una regresión logística aprende mejor. Además se explica variable por variable.
+Con citas reales la relación puede no ser lineal: por eso el reentrenamiento vuelve a comparar logística, árbol y
+Random Forest. XGBoost se probó en `app/ml/comparar_modelos.py` y no va en la imagen (más peso y no ganó).
 
 **Por qué el umbral es 0,20 y no 0,30:** un correo extra no cuesta casi nada; una cita perdida, sí. Con 0,30 el
 modelo solo detectaba 1 de cada 4 inasistencias; con 0,20 detecta unas 6 de cada 10, a cambio de mandar el aviso
