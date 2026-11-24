@@ -17,17 +17,23 @@ export function BarberiaProvider({ children }: { children: ReactNode }) {
   const recargar = useCallback(() => { api.marca().then(setMarca).catch(() => {}); }, []);
   useEffect(recargar, [recargar]);
 
+  // Ícono de la pestaña: el logo de la barbería; si no tiene, la marca de BarberForge (app/icon.svg).
   useEffect(() => {
     if (!marca) return;
     let icono = document.querySelector<HTMLLinkElement>("link[rel='icon']");
+    if (!icono) {
+      icono = document.createElement("link");
+      icono.rel = "icon";
+      document.head.appendChild(icono);
+    }
     if (marca.logo_url) {
-      if (!icono) {
-        icono = document.createElement("link");
-        icono.rel = "icon";
-        document.head.appendChild(icono);
-      }
+      icono.removeAttribute("type");
+      icono.removeAttribute("sizes");
       icono.href = marca.logo_url;
-    } else if (icono) icono.remove();
+    } else {
+      icono.type = "image/svg+xml";
+      icono.href = "/icon.svg";
+    }
   }, [marca]);
 
   return <Contexto.Provider value={{ marca, recargar }}>{children}</Contexto.Provider>;
