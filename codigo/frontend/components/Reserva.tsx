@@ -167,7 +167,7 @@ export function Reserva({ usuario, preServicio, preBarbero }: Props) {
               <div className="opciones">
                 {disponibles.length ? disponibles.map((b, i) => (
                   <button key={b.id} type="button" className={`opt ${b.id === barberoId ? "on" : ""}`} onClick={() => setBarberoId(b.id)}>
-                    <Avatar nombre={b.full_name} foto={b.photo_url} indice={i} className="av" />
+                    <Avatar nombre={b.full_name} foto={b.photo_url} indice={i} className="av" ampliable />
                     <span className="ot"><b>{b.full_name}</b><small>{b.specialties || "Barbero profesional"}</small></span>
                   </button>
                 )) : <Vacio>Ningún barbero ofrece todos esos servicios juntos. Quita alguno o agenda por separado.</Vacio>}

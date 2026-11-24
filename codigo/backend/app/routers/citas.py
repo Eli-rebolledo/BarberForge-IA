@@ -29,9 +29,10 @@ def listar(usuario: Usuario = Depends(todos), db: Session = Depends(get_db)) -> 
 
 
 @router.post("/appointments/{cita_id}/cancel", response_model=OkOut)
-def cancelar(cita_id: int, usuario: Usuario = Depends(todos),
+def cancelar(cita_id: int, tareas: BackgroundTasks, usuario: Usuario = Depends(todos),
              db: Session = Depends(get_db)) -> OkOut:
     citas.cancelar(db, usuario, cita_id)
+    tareas.add_task(citas.correo_de_cancelacion, cita_id)
     return OkOut()
 
 

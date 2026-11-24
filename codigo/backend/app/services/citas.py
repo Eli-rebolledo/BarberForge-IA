@@ -1,5 +1,5 @@
 """Agendamiento, consulta, cancelación y cierre de citas; recordatorios y confirmación por correo."""
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
@@ -94,6 +94,28 @@ def correo_de_creacion(cita_id: int) -> None:
                       f"Servicios: {nombres}\nBarbero: {cita.barbero.full_name}\n"
                       f"Fecha: {cita.appointment_date} a las {hora12(cita.start_time)}\n"
                       f"Total: ${cita.price_cop:,}".replace(",", ".") + f"\n\n{extra}")
+
+
+def correo_de_cancelacion(cita_id: int) -> None:
+    """Correo de «cita cancelada» al cliente: la canceló él, el barbero o el administrador, o se canceló sola porque no
+    se confirmó a tiempo. Abre su propia sesión (segundo plano o worker)."""
+    with bd.SessionLocal() as db:
+        cita = db.get(Cita, cita_id)
+        destino = cita and (cita.cliente.email if cita.cliente else cita.guest_email)
+        if not destino or cita.status not in ("cancelada_cliente", "cancelada_admin", "cancelada_sin_confirmar"):
+            return
+        nombres = " + ".join(s.name for s in cita.servicios) or cita.servicio.name
+        detalle = (f"tu cita de {nombres} con {cita.barbero.full_name} del {cita.appointment_date} "
+                   f"a las {hora12(cita.start_time)}")
+        if cita.status == "cancelada_sin_confirmar":
+            texto = (f"Se canceló {detalle} porque no la confirmaste a tiempo. Te enviamos un recordatorio "
+                     f"{MINUTOS_RECORDATORIO} minutos antes y el enlace para confirmar estuvo activo "
+                     f"{MINUTOS_PARA_CONFIRMAR} minutos; como no se confirmó, el horario quedó libre para otro cliente.")
+        else:
+            texto = f"{'Cancelaste' if cita.status == 'cancelada_cliente' else 'La barbería canceló'} {detalle}."
+        url = get_settings().public_url.rstrip("/")
+        correo.enviar(destino, f"Tu cita en {barberia.nombre(db)} fue cancelada",
+                      f"{texto}\nSi quieres otro horario, agenda aquí: {url}/agendar")
 
 
 # ---------- consultar ----------
@@ -237,26 +259,31 @@ def procesar_recordatorios(db: Session) -> None:
         if ahora <= datetime.combine(cita.appointment_date, cita.start_time) <= ventana:
             enviar_recordatorio(db, cita.id)
 
-    vencidas = ahora_utc() - timedelta(minutes=MINUTOS_PARA_CONFIRMAR)
-    db.execute(update(Cita)
-               .where(Cita.status == "pendiente", Cita.reminder_sent_at < vencidas)
-               .values(status="cancelada_sin_confirmar", token_hash=None))
+    limite = ahora_utc() - timedelta(minutes=MINUTOS_PARA_CONFIRMAR)
+    vencidas = list(db.scalars(select(Cita.id).where(Cita.status == "pendiente", Cita.reminder_sent_at < limite)))
+    if vencidas:
+        db.execute(update(Cita).where(Cita.id.in_(vencidas))
+                   .values(status="cancelada_sin_confirmar", token_hash=None))
     db.commit()
+    for cita_id in vencidas:  # el cliente se entera de por qué perdió la cita
+        correo_de_cancelacion(cita_id)
     disp.borrar_antiguas(db)
 
 
 # ---------- barbero que deja de atender ----------
 
-def reasignar_de_barbero(db: Session, barbero_id: int) -> list[dict]:
-    """Pasa las citas futuras (pendientes o confirmadas) de un barbero inactivo a otro barbero activo que
-    ofrezca los mismos servicios y esté libre a esa misma hora. Si nadie puede, la cita se cancela.
-    Devuelve un resumen por cita para avisar a los clientes por correo."""
+def reasignar_de_barbero(db: Session, barbero_id: int, desde: date | None = None,
+                         hasta: date | None = None) -> list[dict]:
+    """Pasa las citas futuras (pendientes o confirmadas) de un barbero inactivo o ausente (entre `desde` y `hasta`,
+    RF17) a otro barbero activo que ofrezca los mismos servicios y esté libre a esa misma hora. Si nadie puede,
+    la cita se cancela. Devuelve un resumen por cita para avisar a los clientes por correo."""
     ahora = ahora_local()
     anterior = db.get(Usuario, barbero_id)
-    pendientes = [c for c in db.scalars(select(Cita).where(
-        Cita.barber_id == barbero_id, Cita.status.in_(ESTADOS_ACTIVOS),
-        Cita.appointment_date >= ahora.date())).unique()
-        if datetime.combine(c.appointment_date, c.start_time) > ahora]
+    q = select(Cita).where(Cita.barber_id == barbero_id, Cita.status.in_(ESTADOS_ACTIVOS),
+                           Cita.appointment_date >= max(ahora.date(), desde or ahora.date()))
+    if hasta is not None:
+        q = q.where(Cita.appointment_date <= hasta)
+    pendientes = [c for c in db.scalars(q).unique() if datetime.combine(c.appointment_date, c.start_time) > ahora]
     pendientes.sort(key=lambda c: (c.appointment_date, c.start_time))
     otros = [b for b in db.scalars(select(Usuario).where(Usuario.role == Rol.BARBERO, Usuario.is_active,
                                                          Usuario.id != barbero_id).order_by(Usuario.id))]
