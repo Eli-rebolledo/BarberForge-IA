@@ -1,0 +1,8 @@
+# Proveedor de tableros: Grafana carga el tablero de SLI/SLO desde esta carpeta (carpeta «BarberForge»).
+apiVersion: 1
+providers:
+  - name: barberforge
+    folder: BarberForge
+    type: file
+    options:
+      path: /var/lib/barberforge-dashboards
