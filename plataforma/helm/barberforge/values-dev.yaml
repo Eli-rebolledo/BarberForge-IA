@@ -2,11 +2,11 @@
 entorno: dev
 imagenes:
   api:
-    tag: 4e3a9bbe2a3a544a03b4bef9ed4d78b2a099ee84 # actualizado por el pipeline (job «gitops»)
+    tag: e67557435e080949847778362a8f08785d98e59f # actualizado por el pipeline (job «gitops»)
   web:
-    tag: 4e3a9bbe2a3a544a03b4bef9ed4d78b2a099ee84 # actualizado por el pipeline (job «gitops»)
+    tag: e67557435e080949847778362a8f08785d98e59f # actualizado por el pipeline (job «gitops»)
   voz:
-    tag: latest # el pipeline lo cambia por el SHA en el primer push a main con la feature 012
+    tag: e67557435e080949847778362a8f08785d98e59f # el pipeline lo cambia por el SHA en el primer push a main con la feature 012
 barberia:
   publicUrl: http://barberforge.local
 api:
