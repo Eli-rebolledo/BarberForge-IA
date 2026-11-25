@@ -8,7 +8,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U barber"]
+      test: [ "CMD-SHELL", "pg_isready -U barber" ]
       interval: 5s
       retries: 12
     restart: unless-stopped
@@ -47,7 +47,7 @@ services:
       bf-db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
       interval: 15s
       retries: 5
     restart: unless-stopped
@@ -74,7 +74,7 @@ services:
     environment:
       OLLAMA_HOST: http://bf-ollama:11434
       LLM_MODEL: ${LLM_MODEL:-llama3.2:3b}
-    entrypoint: ["/bin/sh", "-c", "ollama pull nomic-embed-text && ollama pull $$LLM_MODEL"]
+    entrypoint: [ "/bin/sh", "-c", "ollama pull nomic-embed-text && ollama pull $$LLM_MODEL" ]
     restart: "no"
 
   # Feature 012 · asistente de voz (Whisper + intención con Ollama + API + Piper). Es opcional y pesado (~1,5 GB de
@@ -86,7 +86,7 @@ services:
       args:
         WHISPER_MODEL: ${WHISPER_MODEL:-base}
         PIPER_VOZ: ${PIPER_VOZ:-es_MX-claude-high}
-    profiles: ["voz"]
+    profiles: [ "voz" ]
     environment:
       API_URL: http://bf-api:8000
       OLLAMA_URL: http://bf-ollama:11434
@@ -99,13 +99,14 @@ services:
 
   mailhog:
     image: mailhog/mailhog:latest
+    platform: linux/amd64
     restart: unless-stopped
 
   # Observabilidad (opcional): Grafana + Prometheus + Tempo + Loki + recolector OpenTelemetry en un contenedor,
   # igual que en el Laboratorio 3. Se levanta con: docker compose --profile observabilidad up -d
   otel-lgtm:
     image: grafana/otel-lgtm:0.8.1
-    profiles: ["observabilidad"]
+    profiles: [ "observabilidad" ]
     environment:
       # Las alertas de Grafana (plataforma/helm/observabilidad/grafana/alertas.yaml) llegan por correo a MailHog.
       GF_SMTP_ENABLED: "true"
