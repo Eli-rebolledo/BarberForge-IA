@@ -29,3 +29,4 @@ terraform.tfvars
 
 # Sistema
 .DS_Store
+/resultados/
