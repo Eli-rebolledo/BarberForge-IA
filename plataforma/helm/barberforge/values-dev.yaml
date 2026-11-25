@@ -5,6 +5,8 @@ imagenes:
     tag: 4e3a9bbe2a3a544a03b4bef9ed4d78b2a099ee84 # actualizado por el pipeline (job «gitops»)
   web:
     tag: 4e3a9bbe2a3a544a03b4bef9ed4d78b2a099ee84 # actualizado por el pipeline (job «gitops»)
+  voz:
+    tag: latest # el pipeline lo cambia por el SHA en el primer push a main con la feature 012
 barberia:
   publicUrl: http://barberforge.local
 api:
@@ -12,4 +14,7 @@ api:
 ingress:
   host: barberforge.local
 observabilidad:
+  enabled: true
+# Feature 012: asistente de voz. Necesita ~1,5 GB de RAM libres en Minikube además de lo anterior.
+voz:
   enabled: true

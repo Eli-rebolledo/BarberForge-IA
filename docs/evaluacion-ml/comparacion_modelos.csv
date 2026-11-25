@@ -1,0 +1,5 @@
+modelo,auc,recall,precision,brier,alertas_pct,en_el_proyecto
+regresion_logistica,0.711,0.5873,0.319,0.141,0.348,True
+xgboost,0.707,0.4815,0.3434,0.1417,0.265,False
+random_forest,0.682,0.4921,0.324,0.1439,0.287,True
+arbol_decision,0.582,0.3915,0.2741,0.1523,0.27,True

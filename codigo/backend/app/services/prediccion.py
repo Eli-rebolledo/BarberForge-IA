@@ -27,8 +27,9 @@ from app.core import metricas
 from app.core.tiempo import ahora_local, zona
 from app.ml import caracteristicas as car
 from app.ml import entrenamiento
-from app.models import Cita, ModeloML
+from app.models import Cita, ModeloML, Rol, Usuario
 from app.models.cita import ESTADOS_ACTIVOS
+from app.services import correo
 
 log = logging.getLogger("barberforge.prediccion")
 
@@ -219,6 +220,27 @@ def reentrenar(db: Session, minimo: int | None = None, registrar_mlflow: bool = 
     reiniciar_cache()
     if registrar_mlflow:
         entrenamiento.registrar_en_mlflow(paquete, resultados, {"origen": "real", "citas": len(filas)})
-    return {"entrenado": True, "activado": activar, "version": paquete["version"], "citas": len(filas),
-            "inasistencias": faltas, "auc_nuevo": auc_nuevo, "auc_anterior": auc_actual,
-            "algoritmo": paquete["algoritmo"]}
+    resultado = {"entrenado": True, "activado": activar, "version": paquete["version"], "citas": len(filas),
+                 "inasistencias": faltas, "auc_nuevo": auc_nuevo, "auc_anterior": auc_actual,
+                 "algoritmo": paquete["algoritmo"]}
+    avisar_reentrenamiento(db, resultado)
+    return resultado
+
+
+def avisar_reentrenamiento(db: Session, r: dict) -> None:
+    """Correo a los administradores: el modelo nuevo se activó solo (era mejor) o se conservó el anterior.
+    Así quien monitorea sabe qué pasó, y puede volver al modelo anterior desde la tabla ml_models si hace falta."""
+    def auc(v: float | None) -> str:
+        return "sin dato" if v is None else f"{v:.3f}"
+    if r["activado"]:
+        asunto = f"[BarberForge] Nuevo modelo de inasistencias activado ({r['algoritmo']})"
+        estado = "El modelo nuevo se ACTIVÓ automáticamente porque su AUC es igual o mejor que el del anterior."
+    else:
+        asunto = "[BarberForge] Reentrenamiento: se conserva el modelo actual"
+        estado = "El modelo nuevo NO se activó: su AUC fue menor. Se sigue usando el modelo anterior."
+    cuerpo = (f"{estado}\n\nVersión entrenada: {r['version']}\nAlgoritmo ganador: {r['algoritmo']}\n"
+              f"AUC nuevo: {auc(r['auc_nuevo'])} · AUC del modelo anterior: {auc(r['auc_anterior'])}\n"
+              f"Citas reales usadas: {r['citas']} ({r['inasistencias']} inasistencias)\n\n"
+              "Detalle de cada candidato en MLflow. Para volver a un modelo anterior, actívalo en la tabla ml_models.")
+    for admin in db.scalars(select(Usuario).where(Usuario.role == Rol.ADMIN, Usuario.is_active.is_(True))):
+        correo.enviar(admin.email, asunto, cuerpo)

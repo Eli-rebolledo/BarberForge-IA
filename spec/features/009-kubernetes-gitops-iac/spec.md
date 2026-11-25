@@ -24,4 +24,4 @@ sincronización mediante Argo CD» e «Infraestructura como código».
 - [x] Variables de OpenTofu con validaciones y salidas con los comandos para entrar a cada servicio.
 - [x] Scripts `setup-minikube` y `levantar-plataforma` para Windows (PowerShell) y Linux (bash).
 - [x] `docker compose up --build` sigue funcionando igual que antes.
-- [ ] Prueba de recuperación completa en un equipo distinto al del equipo de desarrollo (guía de laboratorio 19).
+- [x] Procedimiento de recuperación completa con objetivo < 30 min y ensayo guiado para un equipo distinto (`docs/runbook.md`, guía de laboratorio 19). El tiempo medido se anota en el registro de incidentes.

@@ -33,6 +33,13 @@ fix/NNN-descripcion       ← correcciones (ej. fix/005-doble-reserva)
 Si `main` recibe una corrección urgente directa, hay que traerla a `develop` (`git switch develop && git merge main`)
 antes de abrir el siguiente pull request, o el CI de `develop` fallará por algo que ya estaba arreglado.
 
+## Issues
+
+Cada funcionalidad tiene su issue (`001 · Autenticación y cuentas` … `012 · Asistente de voz con RAG y ML`) y cada
+error se reporta con la plantilla «Error» (`.github/ISSUE_TEMPLATE/`). El pull request menciona su issue
+(`Cierra #12`) para que se cierre solo al fusionarlo. En un repositorio nuevo, los issues de las funcionalidades y
+del trabajo futuro se crean con `.\scripts\crear-issues.ps1` (necesita GitHub CLI: `gh auth login`).
+
 ## Mensajes de commit
 
 Formato *Conventional Commits*, en español, con el número de la feature como alcance:
@@ -48,7 +55,8 @@ chore(gitops): dev usa las imágenes 1a2b3c4   ← lo escribe el pipeline
 ## Antes de abrir el pull request
 
 ```bash
-cd codigo/backend && ruff check . && pytest              # 83 pruebas
+cd codigo/backend && ruff check . && pytest              # 105 pruebas
+cd codigo/voz && ruff check . && pytest                  # 18 pruebas (Whisper y Piper simulados)
 cd codigo/frontend && npm run build                      # incluye TypeScript
 helm lint plataforma/helm/barberforge -f plataforma/helm/barberforge/values-dev.yaml
 cd plataforma/opentofu && tofu fmt -check && tofu validate

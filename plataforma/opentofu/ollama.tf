@@ -1,4 +1,4 @@
-# Ollama en Docker Desktop, fuera de Minikube (así llama3 no le quita RAM al clúster). Igual que en el
+# Ollama en Docker Desktop, fuera de Minikube (así el modelo de lenguaje no le quita RAM al clúster). Igual que en el
 # Laboratorio 2: imagen + volumen + contenedor descritos con el proveedor de Docker.
 
 resource "docker_image" "ollama" {

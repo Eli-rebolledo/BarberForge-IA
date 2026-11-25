@@ -8,7 +8,7 @@
 | `bf-api` | Python 3.12 · FastAPI · SQLAlchemy 2 · Alembic · Pydantic v2 · pydantic-settings · PyJWT · bcrypt · httpx · uvicorn | `codigo/backend/` |
 | `web` | Next.js 16 (App Router, `output: "export"`) · React 19 · TypeScript, sin otras librerías; servido por nginx | `codigo/frontend/` |
 | `bf-db` | PostgreSQL 16 + pgvector | `pgvector/pgvector:pg16` |
-| `bf-ollama` | Ollama: `nomic-embed-text` (embeddings, 768 dim) y `llama3` (respuestas) | `ollama/ollama` |
+| `bf-ollama` | Ollama: `nomic-embed-text` (embeddings, 768 dim) y `llama3.2:3b` (respuestas; antes `llama3` 8B) | `ollama/ollama` |
 | `ollama-init` | Descarga los dos modelos una vez | `ollama/ollama` |
 | `mailhog` | SMTP de pruebas (puerto 1025) y buzón web (8025) | `mailhog/mailhog` |
 

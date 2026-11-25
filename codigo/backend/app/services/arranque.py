@@ -11,7 +11,7 @@ from sqlalchemy import select, text
 from app import db as bd
 from app.core.tiempo import hoy
 from app.models import Rol, Usuario
-from app.services import citas, rag, usuarios
+from app.services import citas, ia, rag, usuarios
 from app.services.disponibilidad import generar_franjas
 
 log = logging.getLogger(__name__)
@@ -74,6 +74,8 @@ async def indexar_asistente() -> None:
     for _ in range(40):
         try:
             if await asyncio.to_thread(_reindexar):
+                # Deja el LLM cargado en memoria: la primera pregunta no espera a que Ollama lo lea del disco.
+                await asyncio.to_thread(ia.precalentar)
                 return
         except Exception:  # noqa: BLE001
             log.exception("indexado del asistente")

@@ -1,0 +1,3 @@
+resultados_voz_*.csv
+# Grabaciones del Golden Dataset de voz: son voces de personas, no se suben al repositorio
+audios/

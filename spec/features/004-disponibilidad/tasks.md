@@ -12,6 +12,10 @@
 - [x] `/admin/disponibilidad`: formulario de generación
 - [x] Paso de horarios en `/agendar`, agrupado por día
 
-## Backlog
-- [ ] RF09: días sin atención (festivos)
-- [ ] RF17: ausencias de barberos
+## Iteración 2 (2026-11-21): festivos y ausencias
+- [x] Migración 009: tablas `closed_days` y `barber_absences`
+- [x] `dias_bloqueados()` en el servicio de disponibilidad: lo usan la generación de franjas y la consulta de libres
+- [x] Servicio `cierres`: festivos de Colombia, cerrar un día, ausencias con reasignación de citas, reabrir al borrar
+- [x] Correos al cliente por cita cancelada (festivo) o cambiada de barbero (ausencia)
+- [x] Página `/admin/festivos` y días tachados en el calendario del administrador
+- [x] Pruebas (`tests/test_cierres.py`): festivos 2026, cierre con cancelación, reapertura, carga sin duplicados, ausencia con y sin reemplazo, el chat no ofrece festivos

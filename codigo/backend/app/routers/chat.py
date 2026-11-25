@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api", tags=["asistente"])
 @router.post("/chat", response_model=ChatOut, response_model_exclude_none=True)
 def conversar(datos: ChatIn, tareas: BackgroundTasks, usuario: Usuario | None = Depends(get_current_user_opcional),
               db: Session = Depends(get_db)) -> ChatOut:
-    return chat.responder(db, usuario, datos.message, datos.book, tareas)
+    return chat.responder(db, usuario, datos.message, datos.book, tareas, datos.channel)
 
 
 @router.get("/chat/history", response_model=HistorialOut, response_model_exclude_none=True)

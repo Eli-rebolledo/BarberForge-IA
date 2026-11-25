@@ -17,4 +17,4 @@
 - [x] Chart de observabilidad y perfil de Compose
 - [x] Tablero de SLI/SLO cargado automáticamente
 - [x] Pruebas: telemetría apagada y encendida (en un proceso aparte)
-- [ ] Reglas de alerta y ejercicio de incidente (latencia inducida en llama3)
+- [x] Reglas de alerta (`plataforma/helm/observabilidad/grafana/alertas.yaml`) y ejercicio de incidente con Ollama detenido (`docs/observabilidad.md`)

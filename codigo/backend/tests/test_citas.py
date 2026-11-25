@@ -108,5 +108,19 @@ def test_proceso_de_recordatorios_envia_y_cancela_sin_confirmar(db, catalogo, mo
     citas_srv.procesar_recordatorios(db)
     db.refresh(proxima)
     db.refresh(vieja)
-    assert len(enviados) == 1 and proxima.reminder_sent_at is not None
+    assert len(enviados) == 2 and proxima.reminder_sent_at is not None
     assert vieja.status == "cancelada_sin_confirmar"
+    # El cliente recibe un correo que explica que se canceló por no confirmar.
+    asunto, cuerpo = enviados[1][1], enviados[1][2]
+    assert "fue cancelada" in asunto and "no la confirmaste a tiempo" in cuerpo
+
+
+def test_correo_al_agendar_y_al_cancelar(client, catalogo, monkeypatch):
+    enviados = []
+    monkeypatch.setattr("app.services.correo.enviar", lambda destino, asunto, cuerpo: enviados.append((asunto, cuerpo)) or True)
+    cab = token(client, "ana@correo.co")
+    cita_id = _agendar(client, catalogo, cab).json()["id"]
+    assert enviados[-1][0].startswith("Tu cita en")
+    assert client.post(f"/api/appointments/{cita_id}/cancel", headers=cab).status_code == 200
+    asunto, cuerpo = enviados[-1]
+    assert "fue cancelada" in asunto and cuerpo.startswith("Cancelaste tu cita de Corte clásico")

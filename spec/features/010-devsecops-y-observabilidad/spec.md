@@ -21,4 +21,4 @@ Responde a los módulos 3 y 4 del diplomado.
 - [x] Métricas propias: citas creadas/canceladas, recordatorios, respuestas del chat por tipo y duración de llama3.
 - [x] SLO definidos (disponibilidad 99 %, p95 < 500 ms sin el chat) con presupuesto de error, en el tablero «BarberForge · SLI/SLO y operación».
 - [x] Observabilidad disponible también en Compose: `docker compose --profile observabilidad up -d`.
-- [ ] Alertas en Grafana para el consumo rápido del presupuesto de error.
+- [x] Alertas en Grafana (disponibilidad, latencia, presupuesto de error y Ollama) cargadas solas en Kubernetes y Compose, con aviso por correo y enlace al runbook.

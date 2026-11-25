@@ -101,7 +101,7 @@ def _segundo_barbero(db, catalogo):
     from tests.conftest import crear_usuario
     luis = crear_usuario(db, "luis@demo.co", Rol.BARBERO, "Luis Ortiz", servicios=[catalogo["corte"], catalogo["barba"]])
     manana = hoy() + timedelta(days=1)
-    generar_franjas(db, luis.id, manana, manana + timedelta(days=2), time(9), time(11), 30)
+    generar_franjas(db, luis.id, manana, manana + timedelta(days=2), time(9), time(11), 30, set(range(7)))
     return luis
 
 

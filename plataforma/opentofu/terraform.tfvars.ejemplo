@@ -26,4 +26,4 @@ github_token   = ""
 # Equipos con poca RAM: solo dev, sin observabilidad, modelo más liviano (cámbialo también en values.yaml)
 # entornos       = ["dev"]
 # observabilidad = false
-# modelo_llm     = "llama3.2:3b"
+# modelo_llm     = "llama3"   # 8B: respuestas un poco mejores, pero ~3 veces más lento en CPU

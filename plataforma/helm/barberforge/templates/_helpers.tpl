@@ -29,6 +29,10 @@ app.kubernetes.io/component: {{ .componente }}
 {{ .Values.imagenes.web.repositorio }}:{{ .Values.imagenes.web.tag }}
 {{- end -}}
 
+{{- define "bf.imagenVoz" -}}
+{{ .Values.imagenes.voz.repositorio }}:{{ .Values.imagenes.voz.tag }}
+{{- end -}}
+
 {{/* Seguridad del pod: nunca como root, perfil seccomp por defecto. */}}
 {{- define "bf.seguridadPod" -}}
 runAsNonRoot: true

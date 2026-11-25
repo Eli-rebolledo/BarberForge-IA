@@ -18,13 +18,9 @@ metadata:
   labels: {app.kubernetes.io/name: otel-lgtm}
 data:
   proveedor.yaml: |
-    apiVersion: 1
-    providers:
-      - name: barberforge
-        folder: BarberForge
-        type: file
-        options:
-          path: /var/lib/barberforge-dashboards
+{{ .Files.Get "grafana/tableros.yaml" | indent 4 }}
+  alertas.yaml: |
+{{ .Files.Get "grafana/alertas.yaml" | indent 4 }}
   barberforge-slo.json: |
 {{ .Files.Get "dashboards/barberforge-slo.json" | indent 4 }}
 ---
@@ -55,6 +51,7 @@ spec:
       labels: {app.kubernetes.io/name: otel-lgtm, app.kubernetes.io/part-of: barberforge}
       annotations:
         checksum/dashboards: {{ .Files.Get "dashboards/barberforge-slo.json" | sha256sum }}
+        checksum/alertas: {{ .Files.Get "grafana/alertas.yaml" | sha256sum }}
     spec:
       automountServiceAccountToken: false
       # La imagen de laboratorio corre como root (hallazgo aceptado en docs/devsecops.md), pero sin
@@ -69,6 +66,16 @@ spec:
             - {name: grafana, containerPort: 3000}
             - {name: otlp-grpc, containerPort: 4317}
             - {name: otlp-http, containerPort: 4318}
+          {{- with .Values.alertas.smtp }}
+          {{- if .host }}
+          # Las alertas se envían por correo (en el laboratorio, a MailHog).
+          env:
+            - {name: GF_SMTP_ENABLED, value: "true"}
+            - {name: GF_SMTP_HOST, value: {{ .host | quote }}}
+            - {name: GF_SMTP_FROM_ADDRESS, value: {{ .remitente | quote }}}
+            - {name: GF_SMTP_SKIP_VERIFY, value: "true"}
+          {{- end }}
+          {{- end }}
           readinessProbe:
             httpGet: {path: /api/health, port: grafana}
             periodSeconds: 10
@@ -89,6 +96,10 @@ spec:
             - name: dashboards
               mountPath: /var/lib/barberforge-dashboards/barberforge-slo.json
               subPath: barberforge-slo.json
+            # Reglas de alerta (SLO de disponibilidad, latencia, presupuesto de error y Ollama) y su contacto.
+            - name: dashboards
+              mountPath: /otel-lgtm/grafana/conf/provisioning/alerting/barberforge.yaml
+              subPath: alertas.yaml
       volumes:
         - name: datos
           {{- if .Values.persistencia.enabled }}

@@ -1,0 +1,235 @@
+# Alertas de BarberForge (Grafana unified alerting, se cargan solas al arrancar otel-lgtm).
+# Las mismas reglas sirven en Kubernetes (ConfigMap del chart «observabilidad») y en Docker Compose (volumen).
+# Cada alerta sale de un SLO de docs/observabilidad.md y apunta a su paso en docs/runbook.md.
+# Umbrales separados por servicio: la API normal se mide en milisegundos; el asistente con IA (LLM en CPU) y la voz,
+# en segundos. Así una respuesta del modelo que tarda 30 s no dispara la alerta de la API, y viceversa.
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: barberforge-correo
+    receivers:
+      - uid: bf-correo
+        type: email
+        disableResolveMessage: false
+        settings:
+          addresses: alertas@barberforge.local   # en el laboratorio llega a MailHog (http://localhost:8025)
+          singleEmail: true
+
+policies:
+  - orgId: 1
+    receiver: barberforge-correo
+    group_by: ["alertname"]
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+
+groups:
+  - orgId: 1
+    name: barberforge-slo
+    folder: BarberForge
+    interval: 1m
+    rules:
+      - uid: bf-disponibilidad
+        title: "SLO disponibilidad: errores 5xx por encima del 1 %"
+        condition: C
+        for: 5m
+        noDataState: OK
+        execErrState: Error
+        labels: {severity: critical, slo: disponibilidad}
+        annotations:
+          summary: "Más del 1 % de las peticiones a la API terminan en error 5xx (últimos 10 min)."
+          description: "Disponibilidad actual: {{ humanizePercentage $values.A.Value }}. Revisa /api/health, la base de datos y los logs en Loki."
+          runbook_url: "docs/runbook.md#api-con-errores-5xx"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: >-
+                1 - (sum(rate(http_server_request_duration_seconds_count{job=~".*barberforge-api",http_response_status_code=~"5.."}[10m])) or vector(0))
+                / sum(rate(http_server_request_duration_seconds_count{job=~".*barberforge-api"}[10m]))
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: {type: lt, params: [0.99]}
+
+      - uid: bf-latencia
+        title: "API transaccional lenta: p95 (login, catálogo, citas) por encima de 500 ms"
+        condition: C
+        for: 10m
+        noDataState: OK
+        execErrState: Error
+        labels: {severity: warning, slo: latencia}
+        annotations:
+          summary: "El p95 de la API normal (todo menos el asistente /api/chat) supera 500 ms durante 10 minutos."
+          description: "p95 actual: {{ humanizeDuration $values.A.Value }}. Suele ser la base de datos o falta de CPU en la API."
+          runbook_url: "docs/runbook.md#api-lenta"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: >-
+                histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{job=~".*barberforge-api",http_route!~"/api/chat.*"}[10m])))
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: {type: gt, params: [0.5]}
+
+      - uid: bf-presupuesto
+        title: "Presupuesto de error del mes por debajo del 25 %"
+        condition: C
+        for: 15m
+        noDataState: OK
+        execErrState: Error
+        labels: {severity: warning, slo: disponibilidad}
+        annotations:
+          summary: "Queda menos del 25 % del presupuesto de error de 30 días."
+          description: "Política: congelar cambios no urgentes y priorizar estabilidad (docs/observabilidad.md)."
+          runbook_url: "docs/runbook.md#presupuesto-de-error"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 2592000, to: 0}
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: >-
+                1 - ((1 - (1 - (sum(increase(http_server_request_duration_seconds_count{job=~".*barberforge-api",http_response_status_code=~"5.."}[30d])) or vector(0))
+                / sum(increase(http_server_request_duration_seconds_count{job=~".*barberforge-api"}[30d])))) / (1 - 0.99))
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: {type: lt, params: [0.25]}
+
+      - uid: bf-ollama
+        title: "El modelo de lenguaje (Ollama) está fallando"
+        condition: C
+        for: 2m
+        noDataState: OK
+        execErrState: Error
+        labels: {severity: warning, componente: ia}
+        annotations:
+          summary: "Hay respuestas del modelo de lenguaje con error en los últimos 5 minutos: el asistente responde con el respaldo sin IA."
+          description: "Llamadas fallidas por minuto: {{ $values.A.Value }}. Revisa que el contenedor de Ollama esté corriendo."
+          runbook_url: "docs/runbook.md#ollama-no-responde"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: sum(rate(barberforge_llm_duracion_seconds_count{estado="error"}[5m])) * 60 or vector(0)
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: {type: gt, params: [0]}
+
+      - uid: bf-asistente-lento
+        title: "Asistente con IA lento: p95 del chat por encima de 60 s"
+        condition: C
+        for: 10m
+        noDataState: OK
+        execErrState: Error
+        labels: {severity: warning, servicio: asistente}
+        annotations:
+          summary: "El p95 de las respuestas del asistente escrito supera 60 s durante 10 minutos (en las pruebas el p95 fue 47 s)."
+          description: "p95 actual: {{ humanizeDuration $values.A.Value }}. Revisa la RAM y CPU de Ollama y el panel del modelo de lenguaje."
+          runbook_url: "docs/runbook.md#asistente-lento"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 900, to: 0}
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: >-
+                histogram_quantile(0.95, sum by (le) (rate(barberforge_asistente_duracion_seconds_bucket{canal="chat"}[15m])))
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: {type: gt, params: [60]}
+
+      - uid: bf-voz-lenta
+        title: "Asistente de voz lento: p95 por encima de 60 s"
+        condition: C
+        for: 10m
+        noDataState: OK
+        execErrState: Error
+        labels: {severity: warning, servicio: voz}
+        annotations:
+          summary: "El p95 de las notas de voz (parte del asistente en la API) supera 60 s durante 10 minutos."
+          description: "p95 actual: {{ humanizeDuration $values.A.Value }}. Revisa bf-voz (Whisper) y Ollama; el script scripts/prueba-servicios.py mide cada etapa."
+          runbook_url: "docs/runbook.md#asistente-lento"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 900, to: 0}
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: >-
+                histogram_quantile(0.95, sum by (le) (rate(barberforge_asistente_duracion_seconds_bucket{canal="voz"}[15m])))
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: {type: gt, params: [60]}
+
+      - uid: bf-sin-respuesta
+        title: "Asistente: más del 30 % de respuestas «no sé» en la última hora"
+        condition: C
+        for: 15m
+        noDataState: OK
+        execErrState: Error
+        labels: {severity: warning, servicio: asistente}
+        annotations:
+          summary: "Más del 30 % de las preguntas al asistente quedaron sin respuesta útil en la última hora: hay un hueco en el conocimiento."
+          description: "Tasa actual: {{ humanizePercentage $values.A.Value }}. Revisa la bandeja «Por aprender»: si es del conocimiento, publica la respuesta; si es del asistente, ajusta y vuelve a correr el Golden Dataset."
+          runbook_url: "docs/runbook.md#asistente-no-sabe"
+        data:
+          - refId: A
+            relativeTimeRange: {from: 3600, to: 0}
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: >-
+                (sum(increase(barberforge_chat_respuestas_total{tipo="sin_respuesta"}[1h])) or vector(0)) / clamp_min(sum(increase(barberforge_chat_respuestas_total[1h])), 10)
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator: {type: gt, params: [0.3]}

@@ -11,6 +11,9 @@ imagenes:
   web:
     repositorio: ghcr.io/eli-rebolledo/barberforge-web
     tag: latest
+  voz:
+    repositorio: ghcr.io/eli-rebolledo/barberforge-voz
+    tag: latest
   pullPolicy: IfNotPresent
   # Si las imágenes de GHCR son privadas: [{name: ghcr-credenciales}] (OpenTofu crea ese Secret si le das un token)
   pullSecrets: []
@@ -58,6 +61,16 @@ ml:
     enabled: true
     horario: "0 3 * * 1"   # lunes a las 3 a. m. (zona del clúster)
 
+# Feature 012 · asistente de voz (en construcción). Apagado hasta que la imagen se publique en GHCR y se pruebe
+# en Minikube: necesita ~1,5 GB de RAM para Whisper y Piper. La intención la clasifica el mismo Ollama de la API.
+voz:
+  enabled: false
+  whisperModelo: base
+  tts: true
+  recursos:
+    requests: {cpu: 250m, memory: 768Mi}
+    limits: {cpu: "2", memory: 2Gi}
+
 web:
   replicas: 1
   recursos:
@@ -76,11 +89,11 @@ postgres:
     limits: {cpu: "1", memory: 1Gi}
 
 # IA local. «externo»: Ollama corre fuera del clúster (Docker Desktop) — recomendado en equipos de 16 GB.
-# «interno»: Ollama corre dentro del clúster (necesita ~8 GB de RAM libres en Minikube para llama3).
+# «interno»: Ollama corre dentro del clúster (con llama3.2:3b necesita ~4 GB de RAM libres en Minikube).
 ollama:
   modo: externo
   urlExterna: http://host.minikube.internal:11434
-  modelo: llama3
+  modelo: llama3.2:3b
   modeloEmbeddings: nomic-embed-text
   interno:
     imagen: ollama/ollama:0.5.4

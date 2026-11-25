@@ -16,4 +16,4 @@
 - [x] Mensajes que explican el recordatorio al agendar
 
 ## Backlog
-- [ ] Correo al agendar y al cancelar
+- [x] Correo al agendar y al cancelar (`correo_de_creacion`, `correo_de_cancelacion`; prueba en `test_citas.py`)

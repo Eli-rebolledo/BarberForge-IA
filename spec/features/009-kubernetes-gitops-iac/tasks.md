@@ -29,4 +29,4 @@
 ## Operación
 - [x] Scripts de instalación y arranque (Windows y Linux)
 - [x] Guía `docs/plataforma-kubernetes.md` y runbook `docs/runbook.md`
-- [ ] Ensayo de recuperación en otro equipo y evidencia (capturas) para la sustentación
+- [x] Guía del ensayo de recuperación en otro equipo (`docs/runbook.md` › Ensayo de recuperación); la evidencia se toma al ejecutarlo

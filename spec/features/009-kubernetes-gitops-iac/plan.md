@@ -34,7 +34,7 @@ Minikube ◄── Argo CD (vigila plataforma/helm cada 60 s) ◄─────
 Admission (`restricted` en staging). Ver 010.
 
 ## Decisiones
-- **Ollama fuera del clúster** (`host.minikube.internal:11434`): llama3 necesita ~8 GB y el equipo tiene 16 GB.
+- **Ollama fuera del clúster** (`host.minikube.internal:11434`): llama3 8B necesitaba ~8 GB y el equipo tiene 16 GB (hoy el modelo por defecto es llama3.2:3b).
 - **Un solo repositorio** con la carpeta `plataforma/` como configuración GitOps: más simple para el equipo; el pipeline escribe solo en `values-dev.yaml`.
 - **Calico** como CNI en Minikube para que las NetworkPolicies se cumplan.
 - **Imágenes públicas en GHCR**: Argo CD y Minikube las descargan sin credenciales (OpenTofu soporta privadas con `github_token`).
