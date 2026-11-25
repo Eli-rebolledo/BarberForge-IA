@@ -14,4 +14,4 @@
 - [x] Página `/barberia` con filtros por tipo
 - [x] `ServicioCard` y `BarberoCard` con “Agendar”
 - [x] `/admin/servicios`: crear, editar, activar/desactivar
-- [ ] Sección `#barberias` en el inicio (o corregir el enlace del `Navbar`)
+- [x] Enlace del `Navbar` corregido: «Barbería» abre `/barberia` y «Cómo funciona» va a `/#proceso`
