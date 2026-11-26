@@ -16,5 +16,5 @@ services:
       - "8001:8001"
   otel-lgtm:
     ports:
-      - "3000:3000"   # Grafana (admin / admin)
-      - "4318:4318"   # OTLP por HTTP
+      - "3000:3000" # Grafana (admin / admin)
+      - "4318:4318" # OTLP por HTTP
